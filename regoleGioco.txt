@@ -1,0 +1,64 @@
+Il circuito :
+
+Il circuito può avere qualsiasi forma, ma il gioco è più interessante se la forma non è troppo regolare. Può comprendere tratti larghi e strettoie, ma in generale la larghezza della pista non dovrebbe mai scendere sotto un minimo di due quadretti. L'arrivo e la fine sono tracciati come linee che tagliano la pista, possibilmente in tratti rettilinei e in direzione perpendicolare rispetto alla pista.
+
+La griglia di partenza:
+
+Ciascuno dei giocatori sceglie una penna di un colore diverso o un simbolo che rappresenterà la sua auto, e disegna il proprio simbolo (o un puntino del proprio colore) su uno spigolo di quadretto che stia sulla linea di partenza o dietro di essa.
+
+Gli otto vicini:
+
+Tutti i movimenti portano le automobili dei giocatori da uno spigolo a un altro. Ogni spigolo ha otto vicini, che sono gli spigoli che si possono raggiungere spostandosi di un lato di quadretto in alto, in basso, a destra o a sinistra, o di una diagonale di quadretto (per analogia, si pensi al movimento del re degli scacchi).
+
+Partenza:
+
+Alla prima mossa, ogni giocatore deve spostare il proprio veicolo su uno degli otto vicini dello spigolo di partenza. La mossa (come le successive) viene marcata disegnando una linea dal punto di partenza a quello di arrivo, e disegnando il simbolo del giocatore nello spigolo di arrivo.
+
+Le altre mosse:
+
+La gara procede a turni. La regola generale del movimento è la seguente. Il punto principale è lo spigolo che il giocatore raggiungerebbe se ripetesse l'ultimo spostamento eseguito (ovviamente traslato rispetto alla nuova posizione raggiunta). Per esempio, se al turno precedente si è spostato di quattro caselle verso l'alto e una a destra, il punto principale si trova a una distanza di ulteriori quattro caselle verso l'alto e una a destra. Il giocatore può decidere di posizionare l'auto effettivamente sul suo punto principale (mantenendo dunque una velocità costante) oppure su uno qualsiasi degli otto vicini di tal punto (e di conseguenza sterzare, accelerare o frenare a seconda che il punto scelto sia laterale, avanti o indietro rispetto al principale).
+
+Incidenti:
+
+I veicoli devono rimanere entro i bordi della pista. Questo vale per il punto di partenza, il punto di arrivo, e la linea che li unisce. Un veicolo che esca di pista viene eliminato dalla gara.
+
+Vincitore:
+
+Il vincitore è il giocatore che attraversa per primo il traguardo.
+
+Regole aggiuntive e alternative
+
+Scontri:
+
+Generalmente si considera illegale un movimento che porti un veicolo in una cella occupata da un altro.
+
+Ridurre il vantaggio del primo di turno
+
+Se si usa la suddetta regola per gli scontri, il giocatore primo di turno potrebbe risultare avvantaggiato (avendo la possibilità di partire "tagliando la strada" agli avversari). Un modo per ridurre questo vantaggio è quello di far scegliere i punti di partenza ai giocatori in ordine inverso rispetto all'ordine in cui muoveranno, in modo che lo svantaggio di muovere per ultimo sia bilanciato dal vantaggio di scegliere per primo il punto di partenza.
+
+Regole alternative per gli incidenti:
+
+Anziché eliminare i veicoli usciti dalla pista, si può imporre che essi debbano rientrare in pista (continuando a muovere nel modo normale), con il vincolo che il punto di rientro sia più indietro rispetto al punto in cui è avvenuta l'uscita di pista. Una manovra del genere richiederà normalmente parecchi turni.
+
+Alcuni giocatori accettano che la linea che unisce il punto di partenza e il punto di arrivo di una mossa passi all'esterno della pista. A seconda della forma della pista, però, questo potrebbe consentire ai veicoli di prendere "scorciatoie" non molto ragionevoli.
+
+Regola dei quattro vicini:
+
+In questa variante, al concetto degli otto vicini (esemplificato dalla mossa del re degli scacchi) si sostituisce quella dei quattro vicini, ovvero si escludono le diagonali (come per il generale degli scacchi cinesi)
+
+Macchia d'olio:
+
+Una zona della pista può essere marcata come "scivolosa"; un veicolo che parta da un punto scivoloso deve per forza procedere al punto principale.
+
+L'applicabilità delle regole aggiuntive e alternative deve essere stabilita prima della partenza, diversamente non si applicano
+
+Matematica:
+
+Ogni mossa di questo gioco può essere rappresentata con un vettore di due numeri, dove il primo indica lo spostamento destra-sinistra e il secondo lo spostamento alto-basso. Per esempio, una mossa di due a destra e quattro avanti può essere espressa come (2,4).
+
+La regola degli otto vicini può in tal caso essere descritta dicendo che ciascuno dei due valori può essere modificato di ±1 rispetto alla mossa precedente. Dopo (2,4) le mosse possibili sono
+
+(1,5) (2,5) (3,5)
+(1,4) (2,4) (3,4)
+(1,3) (2,3) (3,3)
+Assumendo che un turno rappresenti 1 secondo e un quadretto rappresenti 1 metro, il vettore in questione è un vettore di velocità e la regola degli otto vicini impone un'accelerazione massima data dalla radice quadrata di 2 (metri al secondo quadrato). Questa restrizione rappresenta, con un certo realismo, l'inerzia o momento di un veicolo in corsa. Si noti che, da un punto di vista fisico, accelerare, frenare e sterzare sono tutti casi particolari di accelerazione.
