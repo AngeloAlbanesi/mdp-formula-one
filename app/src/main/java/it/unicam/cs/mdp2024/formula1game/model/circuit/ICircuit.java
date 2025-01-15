@@ -8,7 +8,7 @@ public interface ICircuit {
 
     int getHeight(); // Restituisce l'altezza del circuito
 
-    boolean isOnTrack(int x, int y); // Verifica se una coordinata è sulla pista
+    boolean isOncircuit(int x, int y); // Verifica se una coordinata è sulla pista
 
     boolean isStartingPoint(int x, int y); // Verifica se una coordinata è un punto di partenza
 

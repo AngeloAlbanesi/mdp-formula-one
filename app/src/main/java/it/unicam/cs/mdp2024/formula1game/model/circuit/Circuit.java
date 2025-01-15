@@ -7,12 +7,11 @@ import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.WallCell;
 
 /**
  * This class represents a circuit in the Formula 1 game.
- * It contains a grid of CircuitCell objects that represent the track.
+ * It contains a grid of CircuitCell objects that represent the circuit.
  */
 public class Circuit implements ICircuit {
 
-    // TODO: cambiare tutte le occorrenze di track con circuit
-    private final CircuitCell[][] track; // Rappresentazione della pista
+    private final CircuitCell[][] circuit; // Rappresentazione della pista
     // Altezza della pista
     private int width;
     // Larghezza della pista
@@ -21,21 +20,21 @@ public class Circuit implements ICircuit {
     /**
      * Constructor for the Circuit class.
      *
-     * @param circuit the grid of CircuitCell objects that represent the track
+     * @param circuit the grid of CircuitCell objects that represent the circuit
      */
     public Circuit(CircuitCell[][] circuit) {
-        this.track = circuit;
+        this.circuit = circuit;
         this.height = circuit.length;
         this.width = circuit[0].length;
     }
 
     /**
-     * Returns the grid of CircuitCell objects that represent the track.
+     * Returns the grid of CircuitCell objects that represent the circuit.
      *
-     * @return the grid of CircuitCell objects that represent the track
+     * @return the grid of CircuitCell objects that represent the circuit
      */
     public CircuitCell[][] getGrid() {
-        return this.track;
+        return this.circuit;
     }
 
     @Override
@@ -49,23 +48,23 @@ public class Circuit implements ICircuit {
     }
 
     @Override
-    public boolean isOnTrack(int x, int y) {
-        return track[y][x].isTraversable();
+    public boolean isOncircuit(int x, int y) {
+        return circuit[y][x].isTraversable();
     }
 
     @Override
     public boolean isStartingPoint(int x, int y) {
-        return track[y][x] instanceof StartCell;
+        return circuit[y][x] instanceof StartCell;
     }
 
     @Override
     public boolean isFinishLine(int x, int y) {
-        return track[y][x] instanceof FinishCell;
+        return circuit[y][x] instanceof FinishCell;
     }
 
     @Override
     public boolean isWall(int x, int y) {
-        return track[y][x] instanceof WallCell;
+        return circuit[y][x] instanceof WallCell;
     }
 
     @Override
@@ -73,7 +72,7 @@ public class Circuit implements ICircuit {
         boolean hasStart = false;
         boolean hasFinish = false;
 
-        for (CircuitCell[] row : track) {
+        for (CircuitCell[] row : circuit) {
             for (CircuitCell cell : row) {
                 if (cell instanceof StartCell) {
                     hasStart = true;
@@ -104,7 +103,7 @@ public class Circuit implements ICircuit {
 
     @Override
     public CircuitCell getCell(int x, int y) {
-        return track[y][x];
+        return circuit[y][x];
     }
 
 
@@ -115,7 +114,7 @@ public class Circuit implements ICircuit {
     public void printCircuit() {
         for (int i = 0; i < this.height; i++) {
             for (int j = 0; j < this.width; j++) {
-                System.out.print(track[i][j].getSymbol());
+                System.out.print(circuit[i][j].getSymbol());
             }
             System.out.println();
         }
