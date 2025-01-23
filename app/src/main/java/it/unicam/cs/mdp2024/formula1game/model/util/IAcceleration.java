@@ -4,6 +4,10 @@ package it.unicam.cs.mdp2024.formula1game.model.util;
  * Interface for calculating and validating acceleration linked to velocity.
  */
 public interface IAcceleration {
+
+    // Getter per il vettore di accelerazione
+    public IVector getAccelerationVector();
+
     /**
      * Calculates the acceleration vector required to transition
      * from one velocity to another.

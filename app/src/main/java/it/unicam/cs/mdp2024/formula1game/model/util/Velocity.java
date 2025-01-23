@@ -50,9 +50,9 @@ public class Velocity implements IVelocity {
     }
 
     @Override
-    public IVelocity addAcceleration(IVelocity acceleration) {
-        // Add the acceleration vector to the current velocity
-        IVector newVector = this.currentVelocity.add(acceleration.getCurrentVelocity());
+    public IVelocity addAcceleration(IAcceleration acceleration) {
+        // Usa il vettore di accelerazione per modificare la velocità
+        IVector newVector = this.currentVelocity.add(acceleration.getAccelerationVector());
         return new Velocity(newVector);
     }
 

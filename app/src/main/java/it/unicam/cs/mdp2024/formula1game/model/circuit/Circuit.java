@@ -1,9 +1,13 @@
 package it.unicam.cs.mdp2024.formula1game.model.circuit;
 
+import java.util.ArrayList;
+import java.util.List;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.CircuitCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.FinishCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.StartCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.WallCell;
+import it.unicam.cs.mdp2024.formula1game.model.util.Position;
+import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
 
 /**
  * This class represents a circuit in the Formula 1 game.
@@ -106,7 +110,6 @@ public class Circuit implements ICircuit {
         return circuit[y][x];
     }
 
-
     @Override
     /**
      * Prints the circuit to the console.
@@ -120,4 +123,36 @@ public class Circuit implements ICircuit {
         }
     }
 
+    @Override
+    public List<Position> getStartPositions() {
+        List<Position> startPositions = new ArrayList<>();
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                if (isStartingPoint(x, y)) {
+                    startPositions.add(new Position(x, y));
+                }
+            }
+        }
+        return startPositions;
+    }
+
+    @Override
+    public List<Position> getFinishPositions() {
+        List<Position> finishPositions = new ArrayList<>();
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                if (isFinishLine(x, y)) {
+                    finishPositions.add(new Position(x, y));
+                }
+            }
+        }
+        return finishPositions;
+    }
+
+    @Override
+    public boolean isValidPosition(IPosition position) {
+        int row = position.getRow();
+        int col = position.getColumn();
+        return row >= 0 && row < height && col >= 0 && col < width && !isWall(col, row);
+    }
 }

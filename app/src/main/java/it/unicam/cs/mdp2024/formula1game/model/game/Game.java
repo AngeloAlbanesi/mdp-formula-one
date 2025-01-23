@@ -1,4 +1,173 @@
 package it.unicam.cs.mdp2024.formula1game.model.game;
 
+import java.util.List;
+import java.util.ArrayList;
+import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
+import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
+import it.unicam.cs.mdp2024.formula1game.model.util.IAcceleration;
+import it.unicam.cs.mdp2024.formula1game.model.util.Position;
+
+/**
+ * Implementation of the Formula 1 game engine.
+ * Manages the game flow, enforces rules, and maintains game state.
+ */
 public class Game implements IGame {
+
+    private List<IPlayer> players;
+    private ICircuit circuit;
+    private int currentPlayerIndex;
+    private int turnCount;
+    private boolean gameOver;
+    private IPlayer winner;
+
+    /**
+     * Creates a new game instance.
+     */
+    public Game() {
+        this.players = new ArrayList<>();
+        this.currentPlayerIndex = 0;
+        this.turnCount = 0;
+        this.gameOver = false;
+        this.winner = null;
+    }
+
+    @Override
+    public void initializeGame(List<IPlayer> players, ICircuit circuit) {
+        if (players == null || players.isEmpty() || circuit == null) {
+            throw new IllegalArgumentException("Players and circuit must not be null or empty");
+        }
+
+        this.players = new ArrayList<>(players);
+        this.circuit = circuit;
+        this.currentPlayerIndex = 0;
+        this.turnCount = 0;
+        this.gameOver = false;
+        this.winner = null;
+
+        // Get all available starting positions
+        List<Position> startPositions = circuit.getStartPositions();
+        if (startPositions.size() < players.size()) {
+            throw new IllegalStateException("Not enough starting positions for all players");
+        }
+
+        // Assign players to starting positions
+        for (int i = 0; i < players.size(); i++) {
+            players.get(i).getCar().setPosition(startPositions.get(i));
+        }
+    }
+
+    @Override
+    public boolean executeTurn() {
+        if (isGameOver()) {
+            return false;
+        }
+
+        IPlayer currentPlayer = getCurrentPlayer();
+        if (!currentPlayer.isActive()) {
+            moveToNextPlayer();
+            return !isGameOver();
+        }
+
+        // Get and validate player's move
+        IAcceleration acceleration = currentPlayer.chooseAcceleration();
+        if (!isValidMove(currentPlayer.getCar().getPosition(), acceleration)) {
+            currentPlayer.setActive(false); // Player crashed
+            moveToNextPlayer();
+            return !isGameOver();
+        }
+
+        // Apply move
+        currentPlayer.getCar().setAcceleration(acceleration);
+        currentPlayer.getCar().move();
+
+        // Check if player reached any finish position
+        List<Position> finishPositions = circuit.getFinishPositions();
+        for (Position finishPos : finishPositions) {
+            if (currentPlayer.getCar().getPosition().equals(finishPos)) {
+                currentPlayer.setActive(false);
+                winner = currentPlayer;
+                gameOver = true;
+                return false;
+            }
+        }
+
+        moveToNextPlayer();
+        return !isGameOver();
+    }
+
+    private void moveToNextPlayer() {
+        do {
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+            turnCount++;
+
+            // Check if we've completed a full round and all players are inactive
+            if (currentPlayerIndex == 0) {
+                checkGameOver();
+            }
+        } while (!isGameOver() && !getCurrentPlayer().isActive());
+    }
+
+    private void checkGameOver() {
+        boolean allInactive = true;
+        for (IPlayer player : players) {
+            if (player.isActive()) {
+                allInactive = false;
+                break;
+            }
+        }
+        gameOver = allInactive;
+    }
+
+    @Override
+    public IPlayer getCurrentPlayer() {
+        return players.get(currentPlayerIndex);
+    }
+
+    @Override
+    public List<IPlayer> getPlayers() {
+        return new ArrayList<>(players);
+    }
+
+    @Override
+    public ICircuit getCircuit() {
+        return circuit;
+    }
+
+    @Override
+    public boolean isValidMove(IPosition position, IAcceleration acceleration) {
+        return circuit.isValidPosition(position);
+    }
+
+    @Override
+    public int getTurnCount() {
+        return turnCount;
+    }
+
+    @Override
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    @Override
+    public IPlayer getWinner() {
+        return winner;
+    }
+
+    @Override
+    public String getGameState() {
+        StringBuilder state = new StringBuilder();
+        state.append("Turn: ").append(turnCount).append("\n");
+        state.append("Current Player: ").append(getCurrentPlayer().getName()).append("\n");
+        state.append("Players State:\n");
+
+        for (IPlayer player : players) {
+            state.append("- ").append(player.getName())
+                    .append(" (").append(player.isActive() ? "Active" : "Inactive").append(")")
+                    .append(" Position: ").append(player.getCar().getPosition())
+                    .append("\n");
+        }
+
+        return state.toString();
+    }
 }

@@ -12,7 +12,7 @@ public interface IVelocity {
 
     boolean isWithinMaxVelocity(int maxMagnitude); // Checks if the velocity is within a maximum magnitude
 
-    IVelocity addAcceleration(IVelocity acceleration); // Adds an acceleration to the velocity
+    IVelocity addAcceleration(IAcceleration acceleration); // Adds an acceleration to the velocity
 
     void clamp(int maxMagnitude); // Clamps the velocity to a maximum magnitude
 
