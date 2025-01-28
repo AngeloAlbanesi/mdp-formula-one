@@ -1,12 +1,22 @@
 package it.unicam.cs.mdp2024.formula1game.model.game;
 
 import java.util.List;
+import java.io.IOException;
 import java.util.ArrayList;
 import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
+import it.unicam.cs.mdp2024.formula1game.model.player.IPlayerLoader;
+import it.unicam.cs.mdp2024.formula1game.model.player.InvalidPlayerFormatException;
+import it.unicam.cs.mdp2024.formula1game.model.player.PlayerLoader;
+import it.unicam.cs.mdp2024.formula1game.model.car.Car;
+import it.unicam.cs.mdp2024.formula1game.model.car.ICar;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
 import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
 import it.unicam.cs.mdp2024.formula1game.model.util.IAcceleration;
 import it.unicam.cs.mdp2024.formula1game.model.util.Position;
+import it.unicam.cs.mdp2024.formula1game.model.util.Velocity;
+import it.unicam.cs.mdp2024.formula1game.model.util.Acceleration;
+import it.unicam.cs.mdp2024.formula1game.model.util.Vector;
+import it.unicam.cs.mdp2024.formula1game.model.util.IVector;
 
 /**
  * Implementation of the Formula 1 game engine.
@@ -33,6 +43,17 @@ public class Game implements IGame {
     }
 
     @Override
+    public void initializePlayers() {
+        try {
+            IPlayerLoader loader = new PlayerLoader();
+            List<IPlayer> players = loader.loadPlayers("players/players.txt");
+            // Inizializza i giocatori nel gioco
+        } catch (IOException | InvalidPlayerFormatException e) {
+            // Gestione errori
+        }
+    }
+
+    @Override
     public void initializeGame(List<IPlayer> players, ICircuit circuit) {
         if (players == null || players.isEmpty() || circuit == null) {
             throw new IllegalArgumentException("Players and circuit must not be null or empty");
@@ -51,9 +72,17 @@ public class Game implements IGame {
             throw new IllegalStateException("Not enough starting positions for all players");
         }
 
-        // Assign players to starting positions
+        // Create cars and assign them to players with starting positions
         for (int i = 0; i < players.size(); i++) {
-            players.get(i).getCar().setPosition(startPositions.get(i));
+            IPosition startPosition = startPositions.get(i);
+            // Creare Vector con coordinate (0,0) per velocità e accelerazione iniziali
+            IVector zeroVector = new Vector(0, 0);
+            ICar car = new Car(
+                startPosition,                    // posizione di partenza dal circuito 
+                new Velocity(zeroVector),         // velocità iniziale (0,0)
+                new Acceleration(zeroVector)      // accelerazione iniziale (0,0)
+            );
+            players.get(i).setCar(car);
         }
     }
 

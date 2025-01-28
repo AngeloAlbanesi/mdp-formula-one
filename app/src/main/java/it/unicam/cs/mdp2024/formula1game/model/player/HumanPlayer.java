@@ -13,8 +13,9 @@ public class HumanPlayer extends Player {
      *
      * @param name the name of the player
      */
-    public HumanPlayer(String name) {
-        super(name);
+    public HumanPlayer(String name, String color) {
+        super(name, color);
+        
     }
 
     @Override

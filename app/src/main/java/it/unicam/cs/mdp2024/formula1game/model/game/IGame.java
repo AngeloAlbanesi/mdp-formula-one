@@ -14,7 +14,9 @@ import it.unicam.cs.mdp2024.formula1game.model.util.IAcceleration;
  * - Race completion conditions
  */
 public interface IGame {
-    
+
+    void initializePlayers();
+
     /**
      * Initializes and starts a new game with the given players and circuit.
      * Places players at their starting positions and initializes their cars.
@@ -64,7 +66,7 @@ public interface IGame {
      * - No wall collisions
      * - Within circuit bounds
      * 
-     * @param position the position to validate
+     * @param position     the position to validate
      * @param acceleration the proposed acceleration
      * @return true if the move is valid, false otherwise
      */
@@ -88,7 +90,7 @@ public interface IGame {
      * Returns the winner of the game, if any.
      *
      * @return the winning player, or null if there's no winner yet
-     * or all players crashed
+     *         or all players crashed
      */
     IPlayer getWinner();
 

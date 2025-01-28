@@ -54,7 +54,7 @@ public class GameTest {
         // Create 3 players
         List<IPlayer> players = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            IPlayer player = new HumanPlayer("Player " + (i + 1));
+            IPlayer player = new HumanPlayer("Player " + (i + 1), "FF" + String.format("%02d00", (i + 1) * 33));
             player.setCar(createCarAtStartPosition(startPositions.get(i)));
             players.add(player);
         }
@@ -79,7 +79,7 @@ public class GameTest {
         // Create more players than starting positions
         List<IPlayer> players = new ArrayList<>();
         for (int i = 0; i < startPositions.size() + 1; i++) {
-            IPlayer player = new HumanPlayer("Player " + (i + 1));
+            IPlayer player = new HumanPlayer("Player " + (i + 1), "FF0010");
             player.setCar(createCarAtStartPosition(firstStartPosition));
             players.add(player);
         }
@@ -98,7 +98,7 @@ public class GameTest {
         
         // Create a player at a starting position
         List<IPlayer> players = new ArrayList<>();
-        IPlayer player = new HumanPlayer("TestPlayer");
+        IPlayer player = new HumanPlayer("TestPlayer", "FF0000");
         player.setCar(createCarAtStartPosition(startPositions.get(0)));
         players.add(player);
 
@@ -121,7 +121,7 @@ public class GameTest {
         
         // Create a player
         List<IPlayer> players = new ArrayList<>();
-        IPlayer player = new HumanPlayer("TestPlayer");
+        IPlayer player = new HumanPlayer("TestPlayer", "FF1000");
         player.setCar(createCarAtStartPosition(startPositions.get(0)));
         players.add(player);
 

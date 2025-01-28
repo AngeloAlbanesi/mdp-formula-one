@@ -1,5 +1,7 @@
 package it.unicam.cs.mdp2024.formula1game.model.player;
 
+import org.checkerframework.checker.units.qual.t;
+
 import it.unicam.cs.mdp2024.formula1game.model.car.ICar;
 
 /**
@@ -9,6 +11,7 @@ import it.unicam.cs.mdp2024.formula1game.model.car.ICar;
 public abstract class Player implements IPlayer {
     
     private final String name;
+    private final String color;
     private ICar car;
     private boolean active;
     private boolean hasFinishedRace;
@@ -18,8 +21,9 @@ public abstract class Player implements IPlayer {
      *
      * @param name the name of the player
      */
-    protected Player(String name) {
+    protected Player(String name, String color) {
         this.name = name;
+        this.color = color;
         this.active = true;
         this.hasFinishedRace = false;
     }
@@ -31,7 +35,7 @@ public abstract class Player implements IPlayer {
 
     @Override
     public ICar getCar() {
-        return car;
+        return this.car;
     }
 
     @Override
@@ -41,7 +45,7 @@ public abstract class Player implements IPlayer {
 
     @Override
     public boolean isActive() {
-        return active;
+        return this.active;
     }
 
     @Override
@@ -51,7 +55,7 @@ public abstract class Player implements IPlayer {
 
     @Override
     public boolean hasFinished() {
-        return hasFinishedRace;
+        return this.hasFinishedRace;
     }
 
     /**
@@ -62,5 +66,15 @@ public abstract class Player implements IPlayer {
      */
     protected void setFinished(boolean hasFinishedRace) {
         this.hasFinishedRace = hasFinishedRace;
+    }
+
+    @Override
+    public String getColor() {
+        return this.color;
+    }
+
+    @Override
+    public void setColor(String color) {
+        throw new UnsupportedOperationException("Color cannot be changed after player creation");
     }
 }

@@ -13,8 +13,9 @@ public class BotPlayer extends Player {
      *
      * @param name the name of the bot player
      */
-    public BotPlayer(String name) {
-        super(name);
+    public BotPlayer(String name, String color) {
+        super(name, color);
+
     }
 
     @Override

@@ -75,4 +75,18 @@ public interface IPlayer {
      * @param active the active state to set
      */
     void setActive(boolean active);
+
+    /**
+     * Returns the player's color in hexadecimal format.
+     *
+     * @return the player's color as a hexadecimal string (e.g., "FF0000" for red)
+     */
+    String getColor();
+
+    /**
+     * Sets the player's color.
+     *
+     * @param color the color in hexadecimal format (e.g., "FF0000" for red)
+     */
+    void setColor(String color);
 }
