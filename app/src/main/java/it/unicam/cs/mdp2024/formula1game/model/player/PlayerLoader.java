@@ -44,7 +44,6 @@ public class PlayerLoader implements IPlayerLoader {
 
     private IPlayer createPlayer(String type, String name, String color) {
         return switch (type.toLowerCase()) {
-            case "human" -> new HumanPlayer(name, color);
             case "bot" -> new BotPlayer(name, color);
             default -> throw new IllegalArgumentException("Tipo giocatore non supportato: " + type);
         };

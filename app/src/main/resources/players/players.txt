@@ -1,4 +1,2 @@
 # Formato: Tipo;Nome;Colore (HEX)
-Human;Giocatore 1;FF0000
 Bot;CPU 1;00FF00
-Human;Giocatore 2;0000FF
