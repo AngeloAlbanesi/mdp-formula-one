@@ -1,3 +1,5 @@
+Il numero di giri che la gara deve avere è 1.
+
 Il circuito :
 
 Il circuito può avere qualsiasi forma, ma il gioco è più interessante se la forma non è troppo regolare. Può comprendere tratti larghi e strettoie, ma in generale la larghezza della pista non dovrebbe mai scendere sotto un minimo di due quadretti. L'arrivo e la fine sono tracciati come linee che tagliano la pista, possibilmente in tratti rettilinei e in direzione perpendicolare rispetto alla pista.

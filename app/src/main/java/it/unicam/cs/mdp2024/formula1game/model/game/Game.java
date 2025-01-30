@@ -42,8 +42,11 @@ public class Game implements IGame {
         this.winner = null;
     }
 
+    // TODO: inizializzazione giocatori
     @Override
     public void initializePlayers() {
+        // TODO Creazione diretta di PlayerLoader
+        // Nessun injection delle dipendenze
         try {
             IPlayerLoader loader = new PlayerLoader();
             List<IPlayer> players = loader.loadPlayers("players/players.txt");
@@ -78,9 +81,9 @@ public class Game implements IGame {
             // Creare Vector con coordinate (0,0) per velocità e accelerazione iniziali
             IVector zeroVector = new Vector(0, 0);
             ICar car = new Car(
-                startPosition,                    // posizione di partenza dal circuito 
-                new Velocity(zeroVector),         // velocità iniziale (0,0)
-                new Acceleration(zeroVector)      // accelerazione iniziale (0,0)
+                    startPosition, // posizione di partenza dal circuito
+                    new Velocity(zeroVector), // velocità iniziale (0,0)
+                    new Acceleration(zeroVector) // accelerazione iniziale (0,0)
             );
             players.get(i).setCar(car);
         }
@@ -125,6 +128,11 @@ public class Game implements IGame {
         return !isGameOver();
     }
 
+    // TODO Gestione turni:
+    /*
+     * Incremento turnCount ad ogni cambio giocatore invece che a fine round
+     * Manca controllo del numero massimo di turni
+     */
     private void moveToNextPlayer() {
         do {
             currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
@@ -163,6 +171,11 @@ public class Game implements IGame {
         return circuit;
     }
 
+    // TODO: validazione movimento
+    /*
+     * Verifica solo la posizione corrente, non quella futura dopo l'accelerazione
+     * Manca controllo collisioni tra giocatori
+     */
     @Override
     public boolean isValidMove(IPosition position, IAcceleration acceleration) {
         return circuit.isValidPosition(position);
@@ -173,6 +186,8 @@ public class Game implements IGame {
         return turnCount;
     }
 
+    // TODO: Formattazione testo semplice potrebbe limitare l'espansione
+    // Manca persistenza dello stato
     @Override
     public boolean isGameOver() {
         return gameOver;
