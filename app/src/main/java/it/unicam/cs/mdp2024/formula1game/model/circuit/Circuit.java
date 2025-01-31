@@ -2,10 +2,15 @@ package it.unicam.cs.mdp2024.formula1game.model.circuit;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.CircuitCell;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.CheckpointCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.FinishCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.StartCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.WallCell;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.CheckpointRegistry;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.DefaultCheckpointFinder;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.ICheckpointFinder;
 import it.unicam.cs.mdp2024.formula1game.model.util.Position;
 import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
 
@@ -14,12 +19,10 @@ import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
  * It contains a grid of CircuitCell objects that represent the circuit.
  */
 public class Circuit implements ICircuit {
-
     private final CircuitCell[][] circuit; // Rappresentazione della pista
-    // Altezza della pista
-    private int width;
-    // Larghezza della pista
-    private int height;
+    private int width; // Larghezza della pista
+    private int height; // Altezza della pista
+    private final CheckpointRegistry checkpointRegistry; // Gestore dei checkpoint
 
     /**
      * Constructor for the Circuit class.
@@ -30,6 +33,8 @@ public class Circuit implements ICircuit {
         this.circuit = circuit;
         this.height = circuit.length;
         this.width = circuit[0].length;
+        ICheckpointFinder finder = new DefaultCheckpointFinder(circuit);
+        this.checkpointRegistry = new CheckpointRegistry(finder);
     }
 
     /**
@@ -52,7 +57,7 @@ public class Circuit implements ICircuit {
     }
 
     @Override
-    public boolean isOncircuit(int x, int y) {
+    public boolean isOnCircuit(int x, int y) {
         return circuit[y][x].isTraversable();
     }
 
@@ -72,9 +77,20 @@ public class Circuit implements ICircuit {
     }
 
     @Override
+    public boolean isCheckpoint(int x, int y) {
+        return checkpointRegistry.isCheckpoint(x, y);
+    }
+
+    @Override
+    public List<List<Position>> getCheckpoints() {
+        return checkpointRegistry.getCheckpointLines();
+    }
+
+    @Override
     public void validate() {
         boolean hasStart = false;
         boolean hasFinish = false;
+        boolean hasCheckpoint = false;
 
         for (CircuitCell[] row : circuit) {
             for (CircuitCell cell : row) {
@@ -82,6 +98,8 @@ public class Circuit implements ICircuit {
                     hasStart = true;
                 } else if (cell instanceof FinishCell) {
                     hasFinish = true;
+                } else if (cell instanceof CheckpointCell) {
+                    hasCheckpoint = true;
                 }
             }
         }
@@ -92,11 +110,11 @@ public class Circuit implements ICircuit {
         if (!hasFinish) {
             throw new IllegalStateException("Invalid circuit: No finish line ('*') found.");
         }
+        // Non lanciamo eccezioni per i checkpoint mancanti poiché sono opzionali
     }
 
     @Override
     public boolean isValid() {
-        // A circuit is valid if it passes the validate method
         try {
             validate();
             return true;
@@ -107,13 +125,13 @@ public class Circuit implements ICircuit {
 
     @Override
     public CircuitCell getCell(int x, int y) {
+        if (x < 0 || x >= width || y < 0 || y >= height) {
+            throw new IllegalArgumentException("Posizione (" + x + ", " + y + ") non valida.");
+        }
         return circuit[y][x];
     }
 
     @Override
-    /**
-     * Prints the circuit to the console.
-     */
     public void printCircuit() {
         for (int i = 0; i < this.height; i++) {
             for (int j = 0; j < this.width; j++) {

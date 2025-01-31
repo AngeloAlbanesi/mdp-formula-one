@@ -3,6 +3,7 @@ package it.unicam.cs.mdp2024.formula1game.model.circuit;
 import java.io.IOException;
 
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.CircuitCell;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.CheckpointCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.FinishCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.RoadCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.StartCell;
@@ -42,6 +43,7 @@ public class CircuitLoader implements ICircuitLoader {
                     case '#' -> cellTrack[y][x] = new WallCell(x, y);
                     case '.' -> cellTrack[y][x] = new RoadCell(x, y);
                     case '*' -> cellTrack[y][x] = new FinishCell(x, y);
+                    case '@' -> cellTrack[y][x] = new CheckpointCell(x, y);
                     default -> throw new IllegalStateException("Invalid character in track: " + charTrack[y][x]);
                 }
             }

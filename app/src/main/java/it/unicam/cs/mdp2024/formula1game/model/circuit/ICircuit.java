@@ -11,13 +11,22 @@ public interface ICircuit {
 
     int getHeight(); // Restituisce l'altezza del circuito
 
-    boolean isOncircuit(int x, int y); // Verifica se una coordinata è sulla pista
+    boolean isOnCircuit(int x, int y); // Verifica se una coordinata è sulla pista
 
     boolean isStartingPoint(int x, int y); // Verifica se una coordinata è un punto di partenza
 
     boolean isFinishLine(int x, int y); // Verifica se una coordinata è una linea di arrivo
 
     boolean isWall(int x, int y); // Verifica se una coordinata è una parete
+
+    /**
+     * Verifica se una coordinata contiene un checkpoint.
+     *
+     * @param x coordinata x
+     * @param y coordinata y
+     * @return true se la cella è un checkpoint
+     */
+    boolean isCheckpoint(int x, int y); // Verifica se una coordinata è un checkpoint
 
     boolean isValid(); // Verifica che il circuito sia valido
 
@@ -53,4 +62,16 @@ public interface ICircuit {
      * @return true if the position is valid, false otherwise
      */
     boolean isValidPosition(IPosition position);
+
+    /**
+     * Returns all checkpoint positions in the circuit, grouped by alignment.
+     * Checkpoints are cells marked with '@' in the circuit layout.
+     * The returned list is organized so that each inner list contains checkpoints that are:
+     * - Either horizontally aligned (same y coordinate)
+     * - Or vertically aligned (same x coordinate)
+     * This organization facilitates pathfinding and strategic navigation through the circuit.
+     *
+     * @return a list of lists where each inner list contains aligned checkpoint positions
+     */
+    List<List<Position>> getCheckpoints();
 }

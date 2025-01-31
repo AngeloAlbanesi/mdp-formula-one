@@ -27,7 +27,7 @@ public class CircuitFileReader {
 
                 // Controlla che la riga contenga solo caratteri validi
                 for (char c : line.toCharArray()) {
-                    if (c != 'S' && c != '#' && c != '.' && c != '*') {
+                    if (c != 'S' && c != '#' && c != '.' && c != '*' && c != '@') {
                         throw new IOException("Invalid character in circuit: " + c);
                     }
                 }

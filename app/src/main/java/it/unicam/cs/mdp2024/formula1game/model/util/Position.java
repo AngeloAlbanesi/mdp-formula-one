@@ -65,6 +65,18 @@ public IPosition nextPosition(IVelocity velocity) {
 
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Position other = (Position) obj;
+        return this.row == other.row && this.column == other.column;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * row + column;
+    }
+
     public boolean equals(IPosition other) {
         if (other == null) return false;
         return this.row == other.getRow() && this.column == other.getColumn();
