@@ -1,57 +1,73 @@
 package it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint;
 
-import java.util.ArrayList;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.CircuitCell;
+import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
+
 import java.util.List;
-import it.unicam.cs.mdp2024.formula1game.model.util.Position;
+import java.util.ArrayList;
 
 /**
- * Classe responsabile della gestione e memorizzazione delle linee di checkpoint.
- * Implementa il pattern Registry per mantenere uno stato centralizzato dei checkpoint
- * e fornisce metodi di accesso ai dati memorizzati.
+ * Mantiene il registro delle linee di checkpoint nel circuito.
+ * Fornisce metodi per accedere e gestire le linee di checkpoint.
  */
 public class CheckpointRegistry {
-    private List<List<Position>> checkpointLines;
-    private final ICheckpointFinder checkpointFinder;
+    private final List<List<IPosition>> checkpointLines;
+    private final ICheckpointFinder finder;
 
     /**
-     * Crea un nuovo registro dei checkpoint.
+     * Crea un nuovo registro dei checkpoint utilizzando il finder specificato.
      *
-     * @param checkpointFinder il finder utilizzato per cercare i checkpoint
+     * @param finder il finder da utilizzare per trovare i checkpoint
      */
-    public CheckpointRegistry(ICheckpointFinder checkpointFinder) {
-        this.checkpointFinder = checkpointFinder;
-        this.checkpointLines = null; // Inizializzazione lazy
+    public CheckpointRegistry(ICheckpointFinder finder) {
+        this.finder = finder;
+        this.checkpointLines = new ArrayList<>();
     }
 
     /**
-     * Restituisce tutte le linee di checkpoint trovate nel circuito.
-     * Utilizza una cache per evitare di ricalcolare le linee ad ogni chiamata.
+     * Crea un nuovo registro dei checkpoint per il circuito specificato.
      *
-     * @return Lista delle linee di checkpoint
+     * @param circuit la griglia del circuito
      */
-    public List<List<Position>> getCheckpointLines() {
-        if (checkpointLines == null) {
-            checkpointLines = checkpointFinder.findCheckpointLines();
-        }
+    public CheckpointRegistry(CircuitCell[][] circuit) {
+        this(new DefaultCheckpointFinder(circuit));
+        findCheckpoints();
+    }
+
+    /**
+     * Trova e registra tutte le linee di checkpoint nel circuito.
+     */
+    public void findCheckpoints() {
+        checkpointLines.clear();
+        checkpointLines.addAll(finder.findCheckpointLines());
+    }
+
+    /**
+     * Restituisce tutte le linee di checkpoint registrate.
+     *
+     * @return lista delle linee di checkpoint
+     */
+    public List<List<IPosition>> getCheckpointLines() {
         return new ArrayList<>(checkpointLines);
     }
 
     /**
-     * Invalida la cache delle linee di checkpoint.
-     * Da chiamare se il circuito viene modificato.
+     * Verifica se una posizione è parte di una linea di checkpoint.
+     *
+     * @param position la posizione da verificare
+     * @return true se la posizione è parte di una linea di checkpoint
      */
-    public void invalidateCache() {
-        this.checkpointLines = null;
+    public boolean isCheckpoint(IPosition position) {
+        return checkpointLines.stream()
+                .anyMatch(line -> line.contains(position));
     }
 
     /**
-     * Verifica se una coordinata contiene un checkpoint.
+     * Restituisce il numero di linee di checkpoint registrate.
      *
-     * @param x coordinata x
-     * @param y coordinata y
-     * @return true se la cella è un checkpoint
+     * @return numero di linee di checkpoint
      */
-    public boolean isCheckpoint(int x, int y) {
-        return checkpointFinder.isCheckpoint(x, y);
+    public int getCheckpointCount() {
+        return checkpointLines.size();
     }
 }

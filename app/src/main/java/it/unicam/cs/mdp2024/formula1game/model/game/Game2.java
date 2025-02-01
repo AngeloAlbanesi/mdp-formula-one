@@ -1,6 +1,7 @@
 package it.unicam.cs.mdp2024.formula1game.model.game;
 
 import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.CheckpointManager;
 import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
 import it.unicam.cs.mdp2024.formula1game.model.player.IPlayerLoader;
 import it.unicam.cs.mdp2024.formula1game.model.util.IAcceleration;
@@ -11,11 +12,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
-/**
- * Implementazione rifattorizzata del gioco Formula 1 che segue il principio
- * di singola responsabilità (SRP) e gestisce la gara finché tutti i giocatori
- * non completano il percorso.
- */
 public class Game2 implements IGame2 {
 
     private final ITurnManager turnManager;
@@ -27,12 +23,10 @@ public class Game2 implements IGame2 {
     private final Map<IPlayer, Integer> laps;
     private final List<IPlayer> players;
     private final Map<IPlayer, Boolean> hasFinished;
+    private final CheckpointManager checkpointManager;
     private IPlayer winner;
     private boolean gameOver;
 
-    /**
-     * Crea una nuova istanza del gioco con configurazione personalizzata.
-     */
     public Game2(ITurnManager turnManager,
             IWinningStrategy winningStrategy,
             IMoveValidator moveValidator,
@@ -48,13 +42,11 @@ public class Game2 implements IGame2 {
         this.laps = new HashMap<>();
         this.players = new ArrayList<>();
         this.hasFinished = new HashMap<>();
+        this.checkpointManager = new CheckpointManager(circuit);
         this.gameOver = false;
         this.winner = null;
     }
 
-    /**
-     * Crea una nuova istanza del gioco con configurazione predefinita.
-     */
     public Game2(ITurnManager turnManager,
             IWinningStrategy winningStrategy,
             IMoveValidator moveValidator,
@@ -75,10 +67,11 @@ public class Game2 implements IGame2 {
 
             turnManager.setPlayers(players);
 
-            // Inizializza il contatore dei giri e lo stato di arrivo per ogni giocatore
+            // Inizializza il contatore dei giri e lo stato per ogni giocatore
             players.forEach(player -> {
                 laps.put(player, 0);
                 hasFinished.put(player, false);
+                checkpointManager.initializePlayer(player);
 
                 // Verifica che la posizione iniziale sia valida
                 if (!circuit.isValidPosition(player.getCar().getPosition())) {
@@ -112,12 +105,15 @@ public class Game2 implements IGame2 {
         }
 
         try {
+            // Ottieni la posizione corrente prima del movimento
+            IPosition oldPosition = currentPlayer.getCar().getPosition();
+            
             // Ottieni e valida l'accelerazione scelta dal giocatore
             IAcceleration acceleration = currentPlayer.chooseAcceleration();
 
             // Verifica se la mossa è valida usando il validator
             if (!moveValidator.isValidMove(currentPlayer,
-                    currentPlayer.getCar().getPosition(),
+                    oldPosition,
                     acceleration,
                     circuit,
                     players)) {
@@ -129,14 +125,22 @@ public class Game2 implements IGame2 {
             // Applica la mossa
             currentPlayer.getCar().setAcceleration(acceleration);
             currentPlayer.getCar().move();
-
-            // Verifica se il giocatore ha raggiunto una posizione di arrivo
-            if (circuit.getFinishPositions().contains(currentPlayer.getCar().getPosition())) {
-                // Aggiorna i giri completati e segna il giocatore come arrivato
+            
+            // Ottieni la nuova posizione dopo il movimento
+            IPosition newPosition = currentPlayer.getCar().getPosition();
+            
+            // Verifica se il giocatore ha attraversato un checkpoint
+            boolean checkpointCrossed = checkpointManager.checkAndUpdateCheckpoints(
+                currentPlayer, oldPosition, newPosition);
+            
+            // Se ha attraversato tutti i checkpoint e raggiunge il traguardo
+            if (checkpointManager.hasCompletedAllCheckpoints(currentPlayer) &&
+                circuit.getFinishPositions().contains(newPosition)) {
                 if (winningStrategy.updateLaps(currentPlayer, laps)) {
                     hasFinished.put(currentPlayer, true);
                 }
             }
+
         } catch (Exception e) {
             // In caso di errore durante il movimento, disattiva il giocatore
             currentPlayer.setActive(false);
@@ -189,8 +193,14 @@ public class Game2 implements IGame2 {
                     .append(")")
                     .append(" Position: ").append(player.getCar().getPosition())
                     .append(" Laps: ").append(laps.get(player))
-                    .append("/").append(config.getRequiredLaps())
-                    .append("\n");
+                    .append("/").append(config.getRequiredLaps());
+            
+            // Aggiungi informazioni sui checkpoint
+            IPosition nextCheckpoint = checkpointManager.getNextCheckpoint(player);
+            if (nextCheckpoint != null) {
+                state.append(" Next Checkpoint: ").append(nextCheckpoint);
+            }
+            state.append("\n");
         }
 
         if (isGameOver()) {

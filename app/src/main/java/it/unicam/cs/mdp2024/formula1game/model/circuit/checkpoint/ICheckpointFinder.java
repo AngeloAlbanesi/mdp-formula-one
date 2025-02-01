@@ -1,29 +1,27 @@
 package it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint;
 
+import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
 import java.util.List;
-import it.unicam.cs.mdp2024.formula1game.model.util.Position;
 
 /**
- * Interfaccia che definisce il contratto per la ricerca dei checkpoint nel circuito.
- * Implementa il Single Responsibility Principle separando la logica di ricerca dei checkpoint
- * dalla classe Circuit.
+ * Interfaccia per la ricerca delle linee di checkpoint nel circuito.
  */
 public interface ICheckpointFinder {
     /**
      * Trova tutte le linee di checkpoint nel circuito.
-     * Una linea di checkpoint è una sequenza di celle checkpoint adiacenti in linea retta
-     * (orizzontale o verticale).
+     * Una linea di checkpoint è una sequenza di celle checkpoint adiacenti.
      * 
-     * @return Lista di linee di checkpoint, dove ogni linea è una lista di posizioni
+     * @return Lista di liste di posizioni, dove ogni lista interna
+     *         rappresenta una linea di checkpoint
      */
-    List<List<Position>> findCheckpointLines();
+    List<List<IPosition>> findCheckpointLines();
 
     /**
-     * Verifica se una coordinata contiene un checkpoint.
-     *
+     * Verifica se una posizione contiene un checkpoint.
+     * 
      * @param x coordinata x
      * @param y coordinata y
-     * @return true se la cella è un checkpoint
+     * @return true se la posizione contiene un checkpoint
      */
     boolean isCheckpoint(int x, int y);
 }

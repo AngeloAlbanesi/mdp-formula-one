@@ -1,176 +1,172 @@
 package it.unicam.cs.mdp2024.formula1game.model.circuit;
 
+import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.CircuitCell;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.StartCell;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.FinishCell;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.WallCell;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.RoadCell;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.CheckpointRegistry;
+import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
+import it.unicam.cs.mdp2024.formula1game.model.util.Position;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.CircuitCell;
-import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.CheckpointCell;
-import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.FinishCell;
-import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.StartCell;
-import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.WallCell;
-import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.CheckpointRegistry;
-import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.DefaultCheckpointFinder;
-import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.ICheckpointFinder;
-import it.unicam.cs.mdp2024.formula1game.model.util.Position;
-import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
-
-/**
- * This class represents a circuit in the Formula 1 game.
- * It contains a grid of CircuitCell objects that represent the circuit.
- */
 public class Circuit implements ICircuit {
-    private final CircuitCell[][] circuit; // Rappresentazione della pista
-    private int width; // Larghezza della pista
-    private int height; // Altezza della pista
-    private final CheckpointRegistry checkpointRegistry; // Gestore dei checkpoint
+    private final CircuitCell[][] grid;
+    private final int width;
+    private final int height;
+    private final CheckpointRegistry checkpointRegistry;
+    private final List<Position> startPositions;
+    private final List<Position> finishPositions;
+    private boolean isValid;
 
-    /**
-     * Constructor for the Circuit class.
-     *
-     * @param circuit the grid of CircuitCell objects that represent the circuit
-     */
-    public Circuit(CircuitCell[][] circuit) {
-        this.circuit = circuit;
-        this.height = circuit.length;
-        this.width = circuit[0].length;
-        ICheckpointFinder finder = new DefaultCheckpointFinder(circuit);
-        this.checkpointRegistry = new CheckpointRegistry(finder);
-    }
-
-    /**
-     * Returns the grid of CircuitCell objects that represent the circuit.
-     *
-     * @return the grid of CircuitCell objects that represent the circuit
-     */
-    public CircuitCell[][] getGrid() {
-        return this.circuit;
+    public Circuit(CircuitCell[][] grid) {
+        if (grid == null || grid.length == 0 || grid[0].length == 0) {
+            throw new IllegalArgumentException("La griglia non può essere null o vuota");
+        }
+        this.grid = grid;
+        this.height = grid.length;
+        this.width = grid[0].length;
+        this.checkpointRegistry = new CheckpointRegistry(grid);
+        this.startPositions = findCellPositions(StartCell.class);
+        this.finishPositions = findCellPositions(FinishCell.class);
+        validate();
     }
 
     @Override
     public int getWidth() {
-        return this.width;
+        return width;
     }
 
     @Override
     public int getHeight() {
-        return this.height;
+        return height;
     }
 
     @Override
-    public boolean isOnCircuit(int x, int y) {
-        return circuit[y][x].isTraversable();
+    public CircuitCell[][] getGrid() {
+        CircuitCell[][] copy = new CircuitCell[height][width];
+        for (int i = 0; i < height; i++) {
+            System.arraycopy(grid[i], 0, copy[i], 0, width);
+        }
+        return copy;
     }
 
     @Override
-    public boolean isStartingPoint(int x, int y) {
-        return circuit[y][x] instanceof StartCell;
+    public List<Position> getStartPositions() {
+        return new ArrayList<>(startPositions);
     }
 
     @Override
-    public boolean isFinishLine(int x, int y) {
-        return circuit[y][x] instanceof FinishCell;
+    public List<Position> getFinishPositions() {
+        return new ArrayList<>(finishPositions);
     }
 
     @Override
     public boolean isWall(int x, int y) {
-        return circuit[y][x] instanceof WallCell;
+        return isValidCoordinate(x, y) && grid[y][x] instanceof WallCell;
     }
 
     @Override
     public boolean isCheckpoint(int x, int y) {
-        return checkpointRegistry.isCheckpoint(x, y);
+        if (!isValidCoordinate(x, y)) return false;
+        return checkpointRegistry.isCheckpoint(new Position(x, y));
     }
 
     @Override
     public List<List<Position>> getCheckpoints() {
-        return checkpointRegistry.getCheckpointLines();
+        return checkpointRegistry.getCheckpointLines().stream()
+            .map(line -> line.stream()
+                .map(pos -> new Position(pos.getColumn(), pos.getRow()))
+                .collect(Collectors.toList()))
+            .collect(Collectors.toList());
     }
 
     @Override
-    public void validate() {
-        boolean hasStart = false;
-        boolean hasFinish = false;
-        boolean hasCheckpoint = false;
-
-        for (CircuitCell[] row : circuit) {
-            for (CircuitCell cell : row) {
-                if (cell instanceof StartCell) {
-                    hasStart = true;
-                } else if (cell instanceof FinishCell) {
-                    hasFinish = true;
-                } else if (cell instanceof CheckpointCell) {
-                    hasCheckpoint = true;
-                }
-            }
-        }
-
-        if (!hasStart) {
-            throw new IllegalStateException("Invalid circuit: No starting points ('S') found.");
-        }
-        if (!hasFinish) {
-            throw new IllegalStateException("Invalid circuit: No finish line ('*') found.");
-        }
-        // Non lanciamo eccezioni per i checkpoint mancanti poiché sono opzionali
+    public boolean isValidPosition(IPosition position) {
+        return position != null && isValidCoordinate(position.getColumn(), position.getRow());
     }
 
     @Override
-    public boolean isValid() {
-        try {
-            validate();
-            return true;
-        } catch (IllegalStateException e) {
-            return false;
-        }
+    public boolean isOnCircuit(int x, int y) {
+        return isValidCoordinate(x, y) && grid[y][x] instanceof RoadCell;
+    }
+
+    @Override
+    public boolean isStartingPoint(int x, int y) {
+        return isValidCoordinate(x, y) && grid[y][x] instanceof StartCell;
+    }
+
+    @Override
+    public boolean isFinishLine(int x, int y) {
+        return isValidCoordinate(x, y) && grid[y][x] instanceof FinishCell;
     }
 
     @Override
     public CircuitCell getCell(int x, int y) {
-        if (x < 0 || x >= width || y < 0 || y >= height) {
-            throw new IllegalArgumentException("Posizione (" + x + ", " + y + ") non valida.");
+        if (!isValidCoordinate(x, y)) {
+            throw new IllegalArgumentException("Coordinate non valide: (" + x + ", " + y + ")");
         }
-        return circuit[y][x];
+        return grid[y][x];
+    }
+
+    @Override
+    public void validate() {
+        try {
+            if (startPositions.isEmpty()) {
+                throw new IllegalStateException("Il circuito deve avere almeno una posizione di partenza");
+            }
+            if (finishPositions.isEmpty()) {
+                throw new IllegalStateException("Il circuito deve avere almeno una posizione di arrivo");
+            }
+            if (checkpointRegistry.getCheckpointCount() == 0) {
+                throw new IllegalStateException("Il circuito deve avere almeno un checkpoint");
+            }
+            isValid = true;
+        } catch (Exception e) {
+            isValid = false;
+            throw e;
+        }
+    }
+
+    @Override
+    public boolean isValid() {
+        return isValid;
     }
 
     @Override
     public void printCircuit() {
-        for (int i = 0; i < this.height; i++) {
-            for (int j = 0; j < this.width; j++) {
-                System.out.print(circuit[i][j].getSymbol());
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                System.out.print(getCellSymbol(grid[y][x]) + " ");
             }
             System.out.println();
         }
     }
 
-    @Override
-    public List<Position> getStartPositions() {
-        List<Position> startPositions = new ArrayList<>();
+    private String getCellSymbol(CircuitCell cell) {
+        if (cell instanceof WallCell) return "#";
+        if (cell instanceof StartCell) return "S";
+        if (cell instanceof FinishCell) return "*";
+        if (cell instanceof RoadCell) return ".";
+        return " ";
+    }
+
+    private boolean isValidCoordinate(int x, int y) {
+        return x >= 0 && x < width && y >= 0 && y < height;
+    }
+
+    private List<Position> findCellPositions(Class<? extends CircuitCell> cellType) {
+        List<Position> positions = new ArrayList<>();
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                if (isStartingPoint(x, y)) {
-                    startPositions.add(new Position(x, y));
+                if (cellType.isInstance(grid[y][x])) {
+                    positions.add(new Position(x, y));
                 }
             }
         }
-        return startPositions;
-    }
-
-    @Override
-    public List<Position> getFinishPositions() {
-        List<Position> finishPositions = new ArrayList<>();
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                if (isFinishLine(x, y)) {
-                    finishPositions.add(new Position(x, y));
-                }
-            }
-        }
-        return finishPositions;
-    }
-
-    @Override
-    public boolean isValidPosition(IPosition position) {
-        int row = position.getRow();
-        int col = position.getColumn();
-        return row >= 0 && row < height && col >= 0 && col < width && !isWall(col, row);
+        return positions;
     }
 }
