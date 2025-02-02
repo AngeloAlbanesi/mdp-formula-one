@@ -1,8 +1,12 @@
 package it.unicam.cs.mdp2024.formula1game.model.algorithms;
 
 import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
-import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
-import it.unicam.cs.mdp2024.formula1game.model.util.Position;
+import it.unicam.cs.mdp2024.formula1game.model.game.DefaultMoveValidator;
+import it.unicam.cs.mdp2024.formula1game.model.player.BotPlayer;
+import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
+import it.unicam.cs.mdp2024.formula1game.model.car.Car;
+import it.unicam.cs.mdp2024.formula1game.model.util.*;
+import it.unicam.cs.mdp2024.formula1game.model.util.Vector;
 
 import java.util.*;
 
@@ -139,22 +143,67 @@ public class AStar {
         return neighbors;
     }
 
+    private final DefaultMoveValidator moveValidator;
+    private final IPlayer dummyPlayer;
+    private List<IPosition> opponentPositions;
+
+    public AStar() {
+        this.moveValidator = new DefaultMoveValidator();
+        this.dummyPlayer = new BotPlayer("BOT", "black");
+
+        // Inizializza una Car con posizione, velocità e accelerazione iniziali a zero
+        Position initialPosition = new Position(0, 0);
+        Velocity initialVelocity = new Velocity(new Vector(0, 0));
+        Acceleration initialAcceleration = new Acceleration(new Vector(0, 0));
+        this.dummyPlayer.setCar(new Car(initialPosition, initialVelocity, initialAcceleration));
+
+        this.opponentPositions = new ArrayList<>();
+        this.opponentPositions = new ArrayList<>();
+    }
+
+    public void setOpponentPositions(List<IPosition> opponentPositions) {
+        this.opponentPositions = opponentPositions;
+    }
+
     private boolean isValidMove(IPosition from, IPosition to, ICircuit circuit) {
-        // Verifica posizione finale
+        // Controllo base per muri e posizione valida
         if (!circuit.isValidPosition(to) || circuit.isWall(to.getColumn(), to.getRow())) {
             return false;
         }
 
-        // Verifica celle intermedie per mosse diagonali
-        if (from.getColumn() != to.getColumn() && from.getRow() != to.getRow()) {
-            IPosition horizontalCheck = new Position(to.getColumn(), from.getRow());
-            IPosition verticalCheck = new Position(from.getColumn(), to.getRow());
+        // Configura il giocatore dummy per la validazione
+        this.dummyPlayer.getCar().setPosition(from);
+        this.dummyPlayer.getCar().setVelocity(new Velocity(new Vector(0, 0)));
 
-            return !circuit.isWall(horizontalCheck.getColumn(), horizontalCheck.getRow()) &&
-                    !circuit.isWall(verticalCheck.getColumn(), verticalCheck.getRow());
+        // Calcola l'accelerazione come differenza tra le posizioni
+        Vector moveVector = new Vector(
+                to.getColumn() - from.getColumn(),
+                to.getRow() - from.getRow());
+        Acceleration acceleration = new Acceleration(moveVector);
+
+        // Usa il DefaultMoveValidator per verificare la mossa
+        return moveValidator.isValidMove(
+                dummyPlayer,
+                from,
+                acceleration,
+                circuit,
+                createDummyPlayers(opponentPositions));
+    }
+
+    private List<IPlayer> createDummyPlayers(List<IPosition> positions) {
+        List<IPlayer> dummyPlayers = new ArrayList<>();
+        if (positions == null)
+            return dummyPlayers;
+
+        for (IPosition pos : positions) {
+            BotPlayer dummy = new BotPlayer("OPPONENT", "red");
+            Position dummyPos = new Position(pos.getColumn(), pos.getRow());
+            Velocity dummyVel = new Velocity(new Vector(0, 0));
+            Acceleration dummyAcc = new Acceleration(new Vector(0, 0));
+            dummy.setCar(new Car(dummyPos, dummyVel, dummyAcc));
+            dummyPlayers.add(dummy);
         }
-
-        return true;
+        return dummyPlayers;
     }
 
     private double getMoveCost(IPosition from, IPosition to) {

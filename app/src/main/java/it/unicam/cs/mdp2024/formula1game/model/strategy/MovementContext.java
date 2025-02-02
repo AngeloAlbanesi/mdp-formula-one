@@ -4,6 +4,8 @@ import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
 import it.unicam.cs.mdp2024.formula1game.model.util.IAcceleration;
 import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
 import it.unicam.cs.mdp2024.formula1game.model.util.IVelocity;
+import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
+import it.unicam.cs.mdp2024.formula1game.model.game.DefaultMoveValidator;
 
 import java.util.List;
 
@@ -14,11 +16,15 @@ import java.util.List;
 public class MovementContext {
     private MovementStrategy currentStrategy;
     private final MovementWeights weights;
+    private final DefaultMoveValidator moveValidator;
+    private IPlayer currentPlayer;
+    private List<IPlayer> allPlayers;
 
     /**
      * Costruttore che inizializza il contesto con una strategia predefinita (A*).
      */
-    public MovementContext() {
+    public MovementContext(DefaultMoveValidator moveValidator) {
+        this.moveValidator = moveValidator;
         this.currentStrategy = new AStarMovementStrategy();
         this.weights = new MovementWeights();
         this.currentStrategy.configureWeights(weights);
@@ -29,10 +35,22 @@ public class MovementContext {
      *
      * @param strategy La strategia di movimento da utilizzare
      */
-    public MovementContext(MovementStrategy strategy) {
+    public MovementContext(MovementStrategy strategy, DefaultMoveValidator moveValidator) {
+        this.moveValidator = moveValidator;
         this.currentStrategy = strategy;
         this.weights = new MovementWeights();
         this.currentStrategy.configureWeights(weights);
+    }
+
+    /**
+     * Imposta il contesto del gioco per la validazione delle mosse.
+     */
+    public void setGameContext(IPlayer player, List<IPlayer> players) {
+        this.currentPlayer = player;
+        this.allPlayers = players;
+        if (currentStrategy instanceof DefensiveDijkstraMovementStrategy) {
+            ((DefensiveDijkstraMovementStrategy) currentStrategy).setGameContext(player, players);
+        }
     }
 
     /**
@@ -43,6 +61,21 @@ public class MovementContext {
     public void setStrategy(MovementStrategy newStrategy) {
         this.currentStrategy = newStrategy;
         this.currentStrategy.configureWeights(weights);
+        if (newStrategy instanceof DefensiveDijkstraMovementStrategy) {
+            ((DefensiveDijkstraMovementStrategy) newStrategy).setGameContext(currentPlayer, allPlayers);
+        }
+    }
+
+    /**
+     * Attiva la strategia difensiva Dijkstra.
+     */
+    public void activateDefensiveStrategy() {
+        DefensiveDijkstraMovementStrategy defensiveStrategy = 
+            new DefensiveDijkstraMovementStrategy(moveValidator);
+        setStrategy(defensiveStrategy);
+        
+        // Configura i pesi per una guida più difensiva
+        configureWeights(1.0, 2.0, 3.0, 1.0);
     }
 
     /**
@@ -51,8 +84,8 @@ public class MovementContext {
      * @param currentPosition   Posizione attuale
      * @param currentVelocity   Velocità attuale
      * @param opponentPositions Lista delle posizioni degli avversari
-     * @param circuit           Circuito di gioco
-     * @param nextCheckpoint    Prossimo checkpoint da raggiungere
+     * @param circuit          Circuito di gioco
+     * @param nextCheckpoint   Prossimo checkpoint da raggiungere
      * @return L'accelerazione calcolata per la prossima mossa
      */
     public IAcceleration calculateNextMove(IPosition currentPosition,
