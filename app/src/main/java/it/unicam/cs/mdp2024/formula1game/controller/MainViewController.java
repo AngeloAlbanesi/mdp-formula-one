@@ -1,5 +1,7 @@
 package it.unicam.cs.mdp2024.formula1game.controller;
 
+import javafx.animation.PauseTransition; // Import aggiunto
+
 import it.unicam.cs.mdp2024.formula1game.model.circuit.Circuit;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.CircuitLoader;
 import it.unicam.cs.mdp2024.formula1game.model.game.GameConfiguration;
@@ -51,6 +53,19 @@ public class MainViewController {
     public void initialize() {
         renderer = new CircuitRenderer(gameCanvas);
         setupCanvasResizing();
+        Platform.runLater(this::setupInitialStageSize);
+    }
+
+    private void setupInitialStageSize() {
+        gameCanvas.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null && newScene.getWindow() != null) {
+                Stage stage = (Stage) newScene.getWindow();
+                // Imposta dimensioni iniziali ragionevoli per il menu di selezione
+                stage.setWidth(400);  // Larghezza minima per il menu
+                stage.setHeight(300); // Altezza minima per il menu
+                stage.centerOnScreen(); // Centra la finestra sullo schermo
+            }
+        });
     }
 
     private void setupCanvasResizing() {
@@ -60,10 +75,27 @@ public class MainViewController {
                 newScene.windowProperty().addListener((obsWindow, oldWindow, newWindow) -> {
                     if (newWindow != null) {
                         Stage stage = (Stage) newWindow;
-                        BorderPane parent = (BorderPane) gameCanvas.getParent();
-
-                        stage.widthProperty().addListener((o, oldVal, newVal) -> renderer.onResize());
-                        stage.heightProperty().addListener((o, oldVal, newVal) -> renderer.onResize());
+                        
+                        // Imposta le dimensioni iniziali dello Stage in base al canvas
+                        stage.setWidth(renderer.getCalculatedWidth() + 50); // Aggiungi un margine
+                        stage.setHeight(renderer.getCalculatedHeight() + 100); // Aggiungi spazio per i controlli
+                        
+                        // Gestisci il ridimensionamento
+                        stage.widthProperty().addListener((o, oldVal, newVal) -> {
+                            renderer.onResize();
+                            // Aggiorna la larghezza dello Stage se necessario
+                            if (renderer.getCalculatedWidth() + 50 > newVal.doubleValue()) {
+                                stage.setWidth(renderer.getCalculatedWidth() + 50);
+                            }
+                        });
+                        
+                        stage.heightProperty().addListener((o, oldVal, newVal) -> {
+                            renderer.onResize();
+                            // Aggiorna l'altezza dello Stage se necessario
+                            if (renderer.getCalculatedHeight() + 100 > newVal.doubleValue()) {
+                                stage.setHeight(renderer.getCalculatedHeight() + 100);
+                            }
+                        });
                     }
                 });
             }
@@ -104,11 +136,14 @@ public class MainViewController {
 
     private void setupGame(int circuitIndex) throws IOException, InvalidPlayerFormatException {
         try {
+            System.out.println("Debug: Inizializzazione del gioco per il circuito " + circuitIndex);
+            
             CircuitLoader circuitLoader = new CircuitLoader();
             Circuit circuit = (Circuit) circuitLoader.loadCircuit(circuitIndex);
             if (circuit == null) {
                 throw new IOException("Impossibile caricare il circuito. Il file potrebbe essere danneggiato o in un formato non valido.");
             }
+            System.out.println("Debug: Circuito caricato con dimensioni " + circuit.getWidth() + "x" + circuit.getHeight());
 
             // Crea una configurazione di gioco con parametri di default
             GameConfiguration config = new GameConfiguration();
@@ -122,24 +157,50 @@ public class MainViewController {
                     circuit,
                     playerLoader,
                     config);
+            System.out.println("Debug: Istanza di Game2 creata");
 
             // Carica i giocatori passando l'istanza del gioco
             List<IPlayer> players = playerLoader.loadPlayers("players/players.txt", gameInstance);
             if (players == null || players.isEmpty()) {
                 throw new InvalidPlayerFormatException("Nessun giocatore trovato nel file players.txt", 0);
             }
+            System.out.println("Debug: Caricati " + players.size() + " giocatori");
 
             this.game = gameInstance;
 
-            // Passa il circuito e i giocatori al renderer
-            renderer.setCircuit(circuit);
-            renderer.setPlayers(game.getPlayers());
-            renderer.render();
-
-            // Inizializza il gioco
+            // Inizializza il gioco prima del rendering
+            System.out.println("Debug: Avvio del gioco...");
             game.start();
+            System.out.println("Debug: Gioco inizializzato con successo");
+
+            // Verifica che i giocatori siano stati inizializzati correttamente
+            List<IPlayer> initializedPlayers = game.getPlayers();
+            if (initializedPlayers == null || initializedPlayers.isEmpty()) {
+                throw new GameException.InvalidGameStateException("Errore nell'inizializzazione dei giocatori");
+            }
+
+            // Configura il renderer con il circuito e i giocatori inizializzati
+            System.out.println("Debug: Configurazione del renderer...");
+            renderer.setCircuit(circuit);
+            renderer.setPlayers(initializedPlayers);
+
+            // Esegui il rendering iniziale
+            try {
+                System.out.println("Debug: Esecuzione del rendering iniziale...");
+                renderer.render();
+            } catch (Exception renderException) {
+                System.err.println("Errore durante il rendering iniziale: " + renderException.getMessage());
+                renderException.printStackTrace();
+            }
+
+            // Usa PauseTransition per un rendering ritardato più sicuro
+            PauseTransition pause = new PauseTransition(javafx.util.Duration.millis(100));
+            pause.setOnFinished(event -> renderer.render());
+            pause.play();
+
         } catch (IOException e) {
-            throw new IOException("Errore nel caricamento dei file: " + e.getMessage());
+            // Gestione dell'eccezione (opzionale, puoi anche rilanciarla o loggarla)
+            e.printStackTrace();
         } catch (InvalidPlayerFormatException e) {
             throw new InvalidPlayerFormatException("Errore nel formato dei giocatori: " + e.getMessage(), e.getLineNumber());
         } catch (Exception e) {
@@ -149,8 +210,10 @@ public class MainViewController {
 
     @FXML
     private void onStepButtonClicked() {
+        System.out.println("Debug: Step button clicked");
         if (game != null && !game.isGameOver()) {
             executeSingleStep();
+            renderer.render();
         }
     }
 
@@ -178,34 +241,32 @@ public class MainViewController {
 
     private void startSimulation() {
         isSimulationRunning = true;
-        runButton.setText("Ferma Simulazione");
-        stepButton.setDisable(true);
+    runButton.setText("Ferma Simulazione");
+    stepButton.setDisable(true);
 
-        Thread simulationThread = new Thread(() -> {
-            while (isSimulationRunning && !game.isGameOver()) {
-                Platform.runLater(this::executeSingleStep);
-
-                try {
-                    Thread.sleep(500); // Pausa di mezzo secondo tra i turni
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-
+    Thread simulationThread = new Thread(() -> {
+        while (isSimulationRunning && !game.isGameOver()) {
             Platform.runLater(() -> {
-                isSimulationRunning = false;
-                runButton.setText("Esegui Fino alla Fine");
-                stepButton.setDisable(false);
-
+                game.executeTurn();  // Esegui il turno
+                renderer.render();    // Aggiorna la vista
+                
                 if (game.isGameOver()) {
-                    disableButtons();
+                    stopSimulation();
+                    showGameOver();
                 }
             });
-        });
 
-        simulationThread.setDaemon(true);
-        simulationThread.start();
+            try {
+                Thread.sleep(500); // Pausa di mezzo secondo tra i turni
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    });
+
+    simulationThread.setDaemon(true);
+    simulationThread.start();
     }
 
     private void stopSimulation() {

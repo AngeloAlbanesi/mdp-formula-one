@@ -55,13 +55,28 @@ public class CircuitFileReader {
             // Verifica presenza partenza e arrivo
             boolean hasStart = false;
             boolean hasFinish = false;
+            int startCount = 0;
+            int finishCount = 0;
 
-            for (char[] row : trackLines) {
-                for (char c : row) {
-                    if (c == 'S') hasStart = true;
-                    if (c == '*') hasFinish = true;
+            System.out.println("Debug: Verifica delle celle di partenza e arrivo...");
+            for (int y = 0; y < trackLines.size(); y++) {
+                char[] row = trackLines.get(y);
+                for (int x = 0; x < row.length; x++) {
+                    char c = row[x];
+                    if (c == 'S') {
+                        hasStart = true;
+                        startCount++;
+                        System.out.println("Debug: Trovata cella di partenza in posizione (" + x + "," + y + ")");
+                    }
+                    if (c == '*') {
+                        hasFinish = true;
+                        finishCount++;
+                        System.out.println("Debug: Trovata cella di arrivo in posizione (" + x + "," + y + ")");
+                    }
                 }
             }
+
+            System.out.println("Debug: Trovate " + startCount + " celle di partenza e " + finishCount + " celle di arrivo");
 
             if (!hasStart) {
                 throw new IOException("Punto di partenza (S) non trovato nel circuito");

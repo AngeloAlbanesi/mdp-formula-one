@@ -12,7 +12,10 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/fxml/MainView.fxml"));
         primaryStage.setTitle("Formula 1 Game");
-        primaryStage.setScene(new Scene(root));
+        Scene scene = new Scene(root);
+        primaryStage.setScene(scene);
+        primaryStage.setMinWidth(850);  // Canvas width (800) + margini
+        primaryStage.setMinHeight(700); // Canvas height (600) + spazio per bottoni e margini
         primaryStage.show();
     }
 

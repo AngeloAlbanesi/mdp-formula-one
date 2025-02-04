@@ -16,7 +16,9 @@ public class CircuitRenderer {
     private double cellSize;
     private Circuit circuit;
     private List<IPlayer> players;
-    
+    private double calculatedWidth;
+    private double calculatedHeight;
+
     // Viewport per il rendering parziale
     private double viewportX = 0;
     private double viewportY = 0;
@@ -49,7 +51,35 @@ public class CircuitRenderer {
     }
 
     public void setPlayers(List<IPlayer> players) {
+        if (players == null) {
+            System.out.println("Debug: setPlayers - players list is null");
+            this.players = null;
+            return;
+        }
+
+        // Verifica che tutti i giocatori siano correttamente inizializzati
+        boolean allPlayersValid = players.stream().allMatch(player -> player != null &&
+                player.getCar() != null &&
+                player.getCar().getPosition() != null);
+
+        if (!allPlayersValid) {
+            System.out.println("Debug: setPlayers - alcuni giocatori non sono inizializzati correttamente");
+            return;
+        }
+
+        // Mantieni il riferimento alla lista originale
         this.players = players;
+        System.out.println("Debug: setPlayers - Inizializzati " + players.size() + " giocatori");
+
+        // Log dettagliato per ogni giocatore
+        for (IPlayer player : players) {
+            System.out.println("Debug: Player " + player.getName() +
+                    " - Position: " + player.getCar().getPosition() +
+                    " - Color: " + player.getColor());
+        }
+
+        // Forza un aggiornamento del rendering
+        render();
     }
 
     private static final double MAX_CELL_SIZE = 40.0;
@@ -57,8 +87,9 @@ public class CircuitRenderer {
     private static final double MAX_TEXTURE_SIZE = 16384.0; // Limite massimo di texture JavaFX
 
     private void calculateCellSize() {
-        if (circuit == null) return;
-        
+        if (circuit == null)
+            return;
+
         int gridWidth = circuit.getWidth();
         int gridHeight = circuit.getHeight();
 
@@ -69,30 +100,29 @@ public class CircuitRenderer {
         // Calcola la dimensione massima della cella che rispetta i limiti di texture
         double maxCellSizeForWidth = maxAllowedWidth / gridWidth;
         double maxCellSizeForHeight = maxAllowedHeight / gridHeight;
-        
+
         // Usa il minimo tra tutte le limitazioni
         cellSize = Math.min(
-            MAX_CELL_SIZE,
-            Math.min(
-                Math.min(maxCellSizeForWidth, maxCellSizeForHeight),
-                Math.max(MIN_CELL_SIZE, Math.min(maxCellSizeForWidth, maxCellSizeForHeight))
-            )
-        );
+                MAX_CELL_SIZE,
+                Math.min(
+                        Math.min(maxCellSizeForWidth, maxCellSizeForHeight),
+                        Math.max(MIN_CELL_SIZE, Math.min(maxCellSizeForWidth, maxCellSizeForHeight))));
 
         // Calcola le dimensioni finali del canvas
-        double finalWidth = Math.min(gridWidth * cellSize, maxAllowedWidth);
-        double finalHeight = Math.min(gridHeight * cellSize, maxAllowedHeight);
-        
-        canvas.setWidth(finalWidth);
-        canvas.setHeight(finalHeight);
-        
+        calculatedWidth = Math.min(gridWidth * cellSize, maxAllowedWidth);
+        calculatedHeight = Math.min(gridHeight * cellSize, maxAllowedHeight);
+
+        canvas.setWidth(calculatedWidth);
+        canvas.setHeight(calculatedHeight);
+
         // Aggiorna le dimensioni della viewport
-        viewportWidth = finalWidth;
-        viewportHeight = finalHeight;
+        viewportWidth = calculatedWidth;
+        viewportHeight = calculatedHeight;
     }
 
     public void render() {
-        if (circuit == null) return;
+        if (circuit == null)
+            return;
 
         // Pulisci il canvas
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -108,10 +138,10 @@ public class CircuitRenderer {
 
     private void drawGrid() {
         // Calcola gli indici delle celle visibili nella viewport
-        int startX = Math.max(0, (int)(viewportX / cellSize));
-        int startY = Math.max(0, (int)(viewportY / cellSize));
-        int endX = Math.min(circuit.getWidth(), (int)((viewportX + canvas.getWidth()) / cellSize) + 1);
-        int endY = Math.min(circuit.getHeight(), (int)((viewportY + canvas.getHeight()) / cellSize) + 1);
+        int startX = Math.max(0, (int) (viewportX / cellSize));
+        int startY = Math.max(0, (int) (viewportY / cellSize));
+        int endX = Math.min(circuit.getWidth(), (int) ((viewportX + canvas.getWidth()) / cellSize) + 1);
+        int endY = Math.min(circuit.getHeight(), (int) ((viewportY + canvas.getHeight()) / cellSize) + 1);
 
         // Disegna solo le celle visibili
         for (int y = startY; y < endY; y++) {
@@ -127,9 +157,9 @@ public class CircuitRenderer {
         canvas.setOnScroll(event -> {
             // Aggiorna la posizione della viewport con lo scrolling
             viewportX = Math.max(0, Math.min(viewportX - event.getDeltaX(),
-                circuit.getWidth() * cellSize - canvas.getWidth()));
+                    circuit.getWidth() * cellSize - canvas.getWidth()));
             viewportY = Math.max(0, Math.min(viewportY - event.getDeltaY(),
-                circuit.getHeight() * cellSize - canvas.getHeight()));
+                    circuit.getHeight() * cellSize - canvas.getHeight()));
             render();
         });
     }
@@ -141,7 +171,7 @@ public class CircuitRenderer {
 
         // Non disegnare celle fuori dalla viewport
         if (xPos + cellSize < 0 || xPos > canvas.getWidth() ||
-            yPos + cellSize < 0 || yPos > canvas.getHeight()) {
+                yPos + cellSize < 0 || yPos > canvas.getHeight()) {
             return;
         }
 
@@ -156,29 +186,61 @@ public class CircuitRenderer {
     }
 
     private Color getCellColor(CircuitCell cell) {
-        if (cell instanceof WallCell) return WALL_COLOR;
-        if (cell instanceof StartCell) return START_COLOR;
-        if (cell instanceof FinishCell) return FINISH_COLOR;
-        if (cell instanceof CheckpointCell) return CHECKPOINT_COLOR;
+        if (cell instanceof WallCell)
+            return WALL_COLOR;
+        if (cell instanceof StartCell)
+            return START_COLOR;
+        if (cell instanceof FinishCell)
+            return FINISH_COLOR;
+        if (cell instanceof CheckpointCell)
+            return CHECKPOINT_COLOR;
         return ROAD_COLOR; // RoadCell o default
     }
 
-   private void drawCars() {
+    private void drawCars() {
+        if (players == null || players.isEmpty()) {
+            System.out.println("Debug: drawCars - lista giocatori vuota o non inizializzata");
+            return;
+        }
+
+        System.out.println("Debug: drawCars - Inizio rendering di " + players.size() + " giocatori");
+
         for (IPlayer player : players) {
-            if (player instanceof BotPlayer) {
-                drawCar((BotPlayer) player);
+            try {
+                if (player == null) {
+                    System.out.println("Debug: drawCars - trovato giocatore null nella lista");
+                    continue;
+                }
+
+                if (player.getCar() == null) {
+                    System.out.println("Debug: drawCars - " + player.getName() + " non ha un'auto associata");
+                    continue;
+                }
+
+                if (player.getCar().getPosition() == null) {
+                    System.out.println("Debug: drawCars - " + player.getName() + " ha un'auto senza posizione");
+                    continue;
+                }
+
+                drawCar(player);
+                System.out.println("Debug: drawCars - Disegnata auto di " + player.getName() +
+                        " in posizione " + player.getCar().getPosition().getRow() +
+                        "," + player.getCar().getPosition().getColumn());
+
+            } catch (Exception e) {
+                System.out.println("Debug: drawCars - Errore nel rendering del giocatore: " + e.getMessage());
             }
         }
     }
 
-    private void drawCar(BotPlayer player) {
+    private void drawCar(IPlayer player) {
         // Calcola la posizione dell'auto tenendo conto della viewport
-        double x = (player.getCar().getPosition().getColumn() * cellSize) - viewportX;
-        double y = (player.getCar().getPosition().getRow() * cellSize) - viewportY;
+        double x = (player.getCar().getPosition().getRow() * cellSize) - viewportX;
+        double y = (player.getCar().getPosition().getColumn() * cellSize) - viewportY;
 
         // Skip se l'auto è fuori dalla viewport
         if (x + cellSize < 0 || x > canvas.getWidth() ||
-            y + cellSize < 0 || y > canvas.getHeight()) {
+                y + cellSize < 0 || y > canvas.getHeight()) {
             return;
         }
 
@@ -186,9 +248,27 @@ public class CircuitRenderer {
         double carSize = cellSize * 0.8;
         double offset = (cellSize - carSize) / 2;
 
-        // Disegna l'auto come un cerchio
-        gc.setFill(Color.BLUE); // TODO: Usa il colore del giocatore quando implementato
+        // Disegna l'auto come un cerchio usando il colore del giocatore
+        Color carColor;
+        try {
+            String playerColor = player.getColor();
+            if (playerColor == null || playerColor.isEmpty()) {
+                carColor = Color.BLUE;
+            } else {
+                if (!playerColor.startsWith("#")) {
+                    playerColor = "#" + playerColor;
+                }
+                carColor = Color.web(playerColor);
+            }
+        } catch (Exception e) {
+            carColor = Color.BLUE;
+        }
+
+        gc.setFill(carColor);
+        gc.setStroke(Color.WHITE);
+        gc.setLineWidth(2.0);
         gc.fillOval(x + offset, y + offset, carSize, carSize);
+        gc.strokeOval(x + offset, y + offset, carSize, carSize);
     }
 
     // Aggiungi supporto per il drag and drop per lo scrolling
@@ -207,9 +287,9 @@ public class CircuitRenderer {
 
             // Aggiorna la posizione della viewport con i limiti
             viewportX = Math.max(0, Math.min(viewportX - deltaX,
-                circuit.getWidth() * cellSize - viewportWidth));
+                    circuit.getWidth() * cellSize - viewportWidth));
             viewportY = Math.max(0, Math.min(viewportY - deltaY,
-                circuit.getHeight() * cellSize - viewportHeight));
+                    circuit.getHeight() * cellSize - viewportHeight));
 
             lastX[0] = e.getX();
             lastY[0] = e.getY();
@@ -221,5 +301,25 @@ public class CircuitRenderer {
     public void onResize() {
         calculateCellSize();
         render();
+    }
+
+    /**
+     * Restituisce la larghezza calcolata del canvas in base alle dimensioni del
+     * circuito.
+     * 
+     * @return la larghezza calcolata del canvas
+     */
+    public double getCalculatedWidth() {
+        return calculatedWidth;
+    }
+
+    /**
+     * Restituisce l'altezza calcolata del canvas in base alle dimensioni del
+     * circuito.
+     * 
+     * @return l'altezza calcolata del canvas
+     */
+    public double getCalculatedHeight() {
+        return calculatedHeight;
     }
 }

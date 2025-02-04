@@ -54,20 +54,32 @@ public class CircuitLoader implements ICircuitLoader {
         int height = charTrack.length;
         int width = charTrack[0].length;
         CircuitCell[][] cellTrack = new CircuitCell[height][width];
+        int startCellCount = 0;
+
+        System.out.println("Debug: Converting circuit with dimensions " + width + "x" + height);
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 switch (charTrack[y][x]) {
-                    case 'S' -> cellTrack[y][x] = new StartCell(x, y);
+                    case 'S' -> {
+                        cellTrack[y][x] = new StartCell(x, y);
+                        startCellCount++;
+                        System.out.println("Debug: Found StartCell at position (" + x + "," + y + ")");
+                    }
                     case '#' -> cellTrack[y][x] = new WallCell(x, y);
                     case '.' -> cellTrack[y][x] = new RoadCell(x, y);
                     case '*' -> cellTrack[y][x] = new FinishCell(x, y);
                     case '@' -> cellTrack[y][x] = new CheckpointCell(x, y);
-                    default -> throw new IllegalStateException("Carattere non valido nel circuito: " + charTrack[y][x]);
+                    default -> {
+                        System.out.println("Debug: Found invalid character '" + charTrack[y][x] +
+                            "' at position (" + x + "," + y + ")");
+                        throw new IllegalStateException("Carattere non valido nel circuito: " + charTrack[y][x]);
+                    }
                 }
             }
         }
 
+        System.out.println("Debug: Found " + startCellCount + " start positions in total");
         return cellTrack;
     }
 }

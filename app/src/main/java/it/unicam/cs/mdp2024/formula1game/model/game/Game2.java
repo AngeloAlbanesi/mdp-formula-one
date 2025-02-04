@@ -1,5 +1,10 @@
 package it.unicam.cs.mdp2024.formula1game.model.game;
 
+import it.unicam.cs.mdp2024.formula1game.model.car.Car;
+import it.unicam.cs.mdp2024.formula1game.model.util.Velocity;
+import it.unicam.cs.mdp2024.formula1game.model.util.Vector;
+import it.unicam.cs.mdp2024.formula1game.model.util.Acceleration;
+import it.unicam.cs.mdp2024.formula1game.model.player.BotPlayer;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.CheckpointManager;
 import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
@@ -66,11 +71,18 @@ public class Game2 implements IGame2 {
             if (players.isEmpty()) {
                 throw new GameException.InvalidGameStateException("Nessun giocatore caricato");
             }
-        
+
             turnManager.setPlayers(players);
-        
+
+            System.out.println("Debug: Inizializzazione del gioco...");
+
             // Ottieni le posizioni di partenza dal circuito
             List<IPosition> startPositions = new ArrayList<>(circuit.getStartPositions());
+            System.out.println("Debug: Trovate " + startPositions.size() + " posizioni di partenza");
+            for (IPosition pos : startPositions) {
+                System.out.println(
+                        "Debug: Posizione di partenza a riga=" + pos.getRow() + ", colonna=" + pos.getColumn());
+            }
 
             // Ordina le posizioni di partenza
             startPositions.sort((p1, p2) -> {
@@ -80,26 +92,52 @@ public class Game2 implements IGame2 {
                 }
                 return Integer.compare(p1.getColumn(), p2.getColumn());
             });
+            System.out.println("Debug: Posizioni di partenza ordinate");
 
-            // Inizializza il contatore dei giri, lo stato e la posizione iniziale per ogni giocatore
+            // Inizializza il contatore dei giri, lo stato e la posizione iniziale per ogni
+            // giocatore
             for (int i = 0; i < players.size(); i++) {
                 IPlayer player = players.get(i);
+                System.out.println("Debug: Initializing player " + player.getName());
+
                 laps.put(player, 0);
                 hasFinished.put(player, false);
                 checkpointManager.initializePlayer(player);
 
-                // Imposta la posizione iniziale del giocatore
+                // Crea e associa una nuova Car al giocatore
                 if (i < startPositions.size()) {
-                    player.getCar().setPosition(startPositions.get(i));
+                    IPosition startPos = startPositions.get(i);
+                    System.out.println("Debug: Assigning start position " + i + " (row=" +
+                            startPos.getRow() + ", col=" + startPos.getColumn() + ") to player " +
+                            player.getName());
+
+                    player.setCar(new Car(
+                            startPos,
+                            new Velocity(new Vector(0, 0)),
+                            new Acceleration(new Vector(0, 0))));
                 } else {
-                    // Se ci sono più giocatori che posizioni di partenza, usa una posizione di default
-                    player.getCar().setPosition(new Position(0,0));
+                    System.out.println("Debug: No start position available for player " +
+                            player.getName() + ", using default position (0,0)");
+                    // Se più giocatori delle posizioni di partenza, usa posizione default
+                    player.setCar(new Car(
+                            new Position(0, 0),
+                            new Velocity(new Vector(0, 0)),
+                            new Acceleration(new Vector(0, 0))));
                 }
 
-                // Verifica che la posizione iniziale sia valida
+                // Verifica validità posizione iniziale
                 if (!circuit.isValidPosition(player.getCar().getPosition())) {
                     throw new GameException.InvalidPositionException(
                             "Posizione iniziale non valida per il giocatore: " + player.getName());
+                }
+
+                System.out.println("Debug: Player " + player.getName() + " initialized at position " +
+                        player.getCar().getPosition().getRow() + "," +
+                        player.getCar().getPosition().getColumn());
+
+                // Se il giocatore è un bot, inizializza la lista dei giocatori correnti
+                if (player instanceof BotPlayer) {
+                    ((BotPlayer) player).setCurrentPlayers(players);
                 }
             }
 
@@ -113,11 +151,16 @@ public class Game2 implements IGame2 {
 
     @Override
     public void executeTurn() {
+        System.out.println("Debug: Executing turn...");
         if (isGameOver()) {
             return;
         }
 
         IPlayer currentPlayer = turnManager.getCurrentPlayer();
+        System.out.println("Debug: Current player: " + currentPlayer.getName());
+
+        // Aggiungo debug per la posizione prima del movimento
+        System.out.println("Debug: Position before move: " + currentPlayer.getCar().getPosition());
 
         // Se il giocatore ha già finito o non è attivo, passa al prossimo
         if (!currentPlayer.isActive() || hasFinished.get(currentPlayer)) {
@@ -128,7 +171,7 @@ public class Game2 implements IGame2 {
         try {
             // Ottieni la posizione corrente prima del movimento
             IPosition oldPosition = currentPlayer.getCar().getPosition();
-            
+
             // Ottieni e valida l'accelerazione scelta dal giocatore
             IAcceleration acceleration = currentPlayer.chooseAcceleration();
 
@@ -143,20 +186,25 @@ public class Game2 implements IGame2 {
                 return;
             }
 
+            // Aggiorna la lista dei giocatori per i bot
+            if (currentPlayer instanceof BotPlayer) {
+                ((BotPlayer) currentPlayer).setCurrentPlayers(players);
+            }
+
             // Applica la mossa
             currentPlayer.getCar().setAcceleration(acceleration);
             currentPlayer.getCar().move();
-            
+
             // Ottieni la nuova posizione dopo il movimento
             IPosition newPosition = currentPlayer.getCar().getPosition();
-            
+
             // Verifica se il giocatore ha attraversato un checkpoint
             boolean checkpointCrossed = checkpointManager.checkAndUpdateCheckpoints(
-                currentPlayer, oldPosition, newPosition);
-            
+                    currentPlayer, oldPosition, newPosition);
+
             // Se ha attraversato tutti i checkpoint e raggiunge il traguardo
             if (checkpointManager.hasCompletedAllCheckpoints(currentPlayer) &&
-                circuit.getFinishPositions().contains(newPosition)) {
+                    circuit.getFinishPositions().contains(newPosition)) {
                 if (winningStrategy.updateLaps(currentPlayer, laps)) {
                     hasFinished.put(currentPlayer, true);
                 }
@@ -201,12 +249,13 @@ public class Game2 implements IGame2 {
 
     /**
      * Ottiene il gestore dei checkpoint del gioco.
+     * 
      * @return il gestore dei checkpoint
      */
     public CheckpointManager getCheckpointManager() {
         return checkpointManager;
     }
-    
+
     /**
      * Restituisce il validatore di movimento utilizzato nel gioco.
      *
@@ -232,7 +281,7 @@ public class Game2 implements IGame2 {
                     .append(" Position: ").append(player.getCar().getPosition())
                     .append(" Laps: ").append(laps.get(player))
                     .append("/").append(config.getRequiredLaps());
-            
+
             // Aggiungi informazioni sui checkpoint
             IPosition nextCheckpoint = checkpointManager.getNextCheckpoint(player);
             if (nextCheckpoint != null) {
