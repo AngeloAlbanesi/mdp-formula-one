@@ -3,9 +3,11 @@ package it.unicam.cs.mdp2024.formula1game.model.game;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.CheckpointManager;
 import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
+import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
 import it.unicam.cs.mdp2024.formula1game.model.player.IPlayerLoader;
 import it.unicam.cs.mdp2024.formula1game.model.util.IAcceleration;
 import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
+import it.unicam.cs.mdp2024.formula1game.model.util.Position;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -60,30 +62,49 @@ public class Game2 implements IGame2 {
         try {
             // Carica i giocatori e inizializza il gioco
             players.clear();
-            players.addAll(playerLoader.loadPlayers(config.getPlayersFilePath()));
+            players.addAll(playerLoader.loadPlayers(config.getPlayersFilePath(), this));
             if (players.isEmpty()) {
                 throw new GameException.InvalidGameStateException("Nessun giocatore caricato");
             }
-
+        
             turnManager.setPlayers(players);
+        
+            // Ottieni le posizioni di partenza dal circuito
+            List<IPosition> startPositions = new ArrayList<>(circuit.getStartPositions());
 
-            // Inizializza il contatore dei giri e lo stato per ogni giocatore
-            players.forEach(player -> {
+            // Ordina le posizioni di partenza
+            startPositions.sort((p1, p2) -> {
+                int compareX = Integer.compare(p1.getRow(), p2.getRow());
+                if (compareX != 0) {
+                    return compareX;
+                }
+                return Integer.compare(p1.getColumn(), p2.getColumn());
+            });
+
+            // Inizializza il contatore dei giri, lo stato e la posizione iniziale per ogni giocatore
+            for (int i = 0; i < players.size(); i++) {
+                IPlayer player = players.get(i);
                 laps.put(player, 0);
                 hasFinished.put(player, false);
                 checkpointManager.initializePlayer(player);
+
+                // Imposta la posizione iniziale del giocatore
+                if (i < startPositions.size()) {
+                    player.getCar().setPosition(startPositions.get(i));
+                } else {
+                    // Se ci sono più giocatori che posizioni di partenza, usa una posizione di default
+                    player.getCar().setPosition(new Position(0,0));
+                }
 
                 // Verifica che la posizione iniziale sia valida
                 if (!circuit.isValidPosition(player.getCar().getPosition())) {
                     throw new GameException.InvalidPositionException(
                             "Posizione iniziale non valida per il giocatore: " + player.getName());
                 }
-            });
-
-            // Esegui i turni finché la partita non è finita
-            while (!isGameOver()) {
-                executeTurn();
             }
+
+            // Il gioco è inizializzato e pronto per l'esecuzione dei turni
+            // I turni verranno eseguiti tramite chiamate esterne a executeTurn()
         } catch (Exception e) {
             throw new GameException.InvalidGameStateException(
                     "Errore nell'inizializzazione del gioco: " + e.getMessage());
@@ -176,6 +197,23 @@ public class Game2 implements IGame2 {
     @Override
     public ICircuit getCircuit() {
         return circuit;
+    }
+
+    /**
+     * Ottiene il gestore dei checkpoint del gioco.
+     * @return il gestore dei checkpoint
+     */
+    public CheckpointManager getCheckpointManager() {
+        return checkpointManager;
+    }
+    
+    /**
+     * Restituisce il validatore di movimento utilizzato nel gioco.
+     *
+     * @return il validatore di movimento
+     */
+    public DefaultMoveValidator getMoveValidator() {
+        return (DefaultMoveValidator) moveValidator;
     }
 
     @Override

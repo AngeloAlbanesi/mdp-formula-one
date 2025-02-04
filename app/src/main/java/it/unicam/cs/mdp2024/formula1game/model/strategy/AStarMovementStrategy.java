@@ -1,12 +1,12 @@
 package it.unicam.cs.mdp2024.formula1game.model.strategy;
 
 import it.unicam.cs.mdp2024.formula1game.model.algorithms.AStar;
+import it.unicam.cs.mdp2024.formula1game.model.car.Car;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
 import it.unicam.cs.mdp2024.formula1game.model.game.DefaultMoveValidator;
-import it.unicam.cs.mdp2024.formula1game.model.player.BotPlayer;
 import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
+import it.unicam.cs.mdp2024.formula1game.model.player.BotPlayer;
 import it.unicam.cs.mdp2024.formula1game.model.util.*;
-import it.unicam.cs.mdp2024.formula1game.model.util.Vector;
 
 import java.util.*;
 
@@ -23,12 +23,26 @@ public class AStarMovementStrategy implements MovementStrategy {
     private IPosition currentTarget;
     private static final double OPTIMAL_SPEED = 3.0; // Velocità ottimale bilanciata
 
-    public AStarMovementStrategy() {
+    public AStarMovementStrategy(DefaultMoveValidator moveValidator) {
         this.pathFinder = new AStar();
-        this.moveValidator = new DefaultMoveValidator();
+        this.moveValidator = moveValidator;
         this.weights = new MovementWeights(0.6, 0.3, 0.4, 0.5); // Pesi bilanciati
-        this.dummyPlayer = new BotPlayer("BOT", "black");
+        
+        // Crea un giocatore dummy di test
+        Car dummyCar = new Car(
+            new Position(0, 0), 
+            new Velocity(new it.unicam.cs.mdp2024.formula1game.model.util.Vector(0, 0)), 
+            new Acceleration(new it.unicam.cs.mdp2024.formula1game.model.util.Vector(0, 0))
+        );
+        this.dummyPlayer = createDummyPlayer("TEST_BOT", "black", dummyCar);
+        
         this.currentPath = new ArrayList<>();
+    }
+
+    private IPlayer createDummyPlayer(String name, String color, Car car) {
+        BotPlayer player = new BotPlayer(name, color);
+        player.setCar(car);
+        return player;
     }
 
     @Override
@@ -56,7 +70,7 @@ public class AStarMovementStrategy implements MovementStrategy {
                 currentVelocity, opponentPositions, circuit);
 
         if (validAccelerations.isEmpty()) {
-            return new Acceleration(new Vector(0, 0));
+            return new Acceleration(new it.unicam.cs.mdp2024.formula1game.model.util.Vector(0, 0));
         }
 
         // Valuta ogni accelerazione possibile considerando sia il waypoint che il target finale
@@ -80,7 +94,7 @@ public class AStarMovementStrategy implements MovementStrategy {
                 currentVelocity, opponentPositions, circuit);
 
         if (validAccelerations.isEmpty()) {
-            return new Acceleration(new Vector(0, 0));
+            return new Acceleration(new it.unicam.cs.mdp2024.formula1game.model.util.Vector(0, 0));
         }
 
         return findBestAcceleration(validAccelerations, currentPosition, currentVelocity,
@@ -100,7 +114,7 @@ public class AStarMovementStrategy implements MovementStrategy {
         // Genera tutte le possibili accelerazioni (-1, 0, 1 per x e y)
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
-                IAcceleration acc = new Acceleration(new Vector(dx, dy));
+                IAcceleration acc = new Acceleration(new it.unicam.cs.mdp2024.formula1game.model.util.Vector(dx, dy));
                 IVelocity newVelocity = currentVelocity.addAcceleration(acc);
                 IPosition newPosition = currentPosition.nextPosition(newVelocity);
 
@@ -117,9 +131,14 @@ public class AStarMovementStrategy implements MovementStrategy {
 
     private List<IPlayer> createDummyPlayers(List<IPosition> opponentPositions) {
         List<IPlayer> dummyPlayers = new ArrayList<>();
-        for (IPosition pos : opponentPositions) {
-            BotPlayer dummy = new BotPlayer("OPPONENT", "red");
-            dummy.getCar().setPosition(pos);
+        for (int i = 0; i < opponentPositions.size(); i++) {
+            IPosition pos = opponentPositions.get(i);
+            Car dummyCar = new Car(
+                pos, 
+                new Velocity(new it.unicam.cs.mdp2024.formula1game.model.util.Vector(0, 0)), 
+                new Acceleration(new it.unicam.cs.mdp2024.formula1game.model.util.Vector(0, 0))
+            );
+            IPlayer dummy = createDummyPlayer("OPPONENT_" + i, "red", dummyCar);
             dummyPlayers.add(dummy);
         }
         return dummyPlayers;

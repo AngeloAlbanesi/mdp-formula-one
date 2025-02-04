@@ -1,12 +1,8 @@
 package it.unicam.cs.mdp2024.formula1game.model.algorithms;
 
 import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
-import it.unicam.cs.mdp2024.formula1game.model.game.DefaultMoveValidator;
-import it.unicam.cs.mdp2024.formula1game.model.player.BotPlayer;
-import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
-import it.unicam.cs.mdp2024.formula1game.model.car.Car;
-import it.unicam.cs.mdp2024.formula1game.model.util.*;
-import it.unicam.cs.mdp2024.formula1game.model.util.Vector;
+import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
+import it.unicam.cs.mdp2024.formula1game.model.util.Position;
 
 import java.util.*;
 
@@ -78,6 +74,12 @@ public class AStar {
 
         while (!openSet.isEmpty()) {
             Node current = openSet.poll();
+            // Verifica se il nodo estratto è ancora valido confrontando i costi
+            Node validNode = openMap.get(current.position);
+            if (validNode == null || validNode.gCost != current.gCost) {
+                // Nodo non più valido (già processato con costo migliore), skip
+                continue;
+            }
             openMap.remove(current.position);
 
             if (isAtTarget(current.position, target)) {
@@ -105,9 +107,9 @@ public class AStar {
                     openMap.put(neighbor, neighborNode);
                 } else if (newGCost < neighborNode.gCost) {
                     // Percorso migliore verso un nodo esistente
-                    openSet.remove(neighborNode);
+                    // Non rimuoviamo dalla PriorityQueue per evitare O(n)
+                    // Il nodo vecchio verrà scartato quando estratto
                     neighborNode.updateCosts(current, newGCost, neighborNode.hCost);
-                    openSet.add(neighborNode);
                 }
             }
         }
@@ -135,7 +137,7 @@ public class AStar {
             int newY = pos.getRow() + dir[1];
             IPosition newPos = new Position(newX, newY);
 
-            if (isValidMove(pos, newPos, circuit)) {
+            if (isValidPosition(newPos, circuit)) {
                 neighbors.add(newPos);
             }
         }
@@ -143,67 +145,8 @@ public class AStar {
         return neighbors;
     }
 
-    private final DefaultMoveValidator moveValidator;
-    private final IPlayer dummyPlayer;
-    private List<IPosition> opponentPositions;
-
-    public AStar() {
-        this.moveValidator = new DefaultMoveValidator();
-        this.dummyPlayer = new BotPlayer("BOT", "black");
-
-        // Inizializza una Car con posizione, velocità e accelerazione iniziali a zero
-        Position initialPosition = new Position(0, 0);
-        Velocity initialVelocity = new Velocity(new Vector(0, 0));
-        Acceleration initialAcceleration = new Acceleration(new Vector(0, 0));
-        this.dummyPlayer.setCar(new Car(initialPosition, initialVelocity, initialAcceleration));
-
-        this.opponentPositions = new ArrayList<>();
-        this.opponentPositions = new ArrayList<>();
-    }
-
-    public void setOpponentPositions(List<IPosition> opponentPositions) {
-        this.opponentPositions = opponentPositions;
-    }
-
-    private boolean isValidMove(IPosition from, IPosition to, ICircuit circuit) {
-        // Controllo base per muri e posizione valida
-        if (!circuit.isValidPosition(to) || circuit.isWall(to.getColumn(), to.getRow())) {
-            return false;
-        }
-
-        // Configura il giocatore dummy per la validazione
-        this.dummyPlayer.getCar().setPosition(from);
-        this.dummyPlayer.getCar().setVelocity(new Velocity(new Vector(0, 0)));
-
-        // Calcola l'accelerazione come differenza tra le posizioni
-        Vector moveVector = new Vector(
-                to.getColumn() - from.getColumn(),
-                to.getRow() - from.getRow());
-        Acceleration acceleration = new Acceleration(moveVector);
-
-        // Usa il DefaultMoveValidator per verificare la mossa
-        return moveValidator.isValidMove(
-                dummyPlayer,
-                from,
-                acceleration,
-                circuit,
-                createDummyPlayers(opponentPositions));
-    }
-
-    private List<IPlayer> createDummyPlayers(List<IPosition> positions) {
-        List<IPlayer> dummyPlayers = new ArrayList<>();
-        if (positions == null)
-            return dummyPlayers;
-
-        for (IPosition pos : positions) {
-            BotPlayer dummy = new BotPlayer("OPPONENT", "red");
-            Position dummyPos = new Position(pos.getColumn(), pos.getRow());
-            Velocity dummyVel = new Velocity(new Vector(0, 0));
-            Acceleration dummyAcc = new Acceleration(new Vector(0, 0));
-            dummy.setCar(new Car(dummyPos, dummyVel, dummyAcc));
-            dummyPlayers.add(dummy);
-        }
-        return dummyPlayers;
+    private boolean isValidPosition(IPosition pos, ICircuit circuit) {
+        return circuit.isValidPosition(pos) && !circuit.isWall(pos.getColumn(), pos.getRow());
     }
 
     private double getMoveCost(IPosition from, IPosition to) {

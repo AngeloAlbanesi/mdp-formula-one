@@ -10,25 +10,44 @@ import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.StartCell;
 import it.unicam.cs.mdp2024.formula1game.model.circuit.cell.WallCell;
 
 public class CircuitLoader implements ICircuitLoader {
+    private static final String[] DEFAULT_CIRCUITS = {
+        "circuits/circuit1.txt",
+        "circuits/circuit2.txt"
+    };
+    
     private final String[] filePaths;
 
+    public CircuitLoader() {
+        this(DEFAULT_CIRCUITS);
+    }
+
     public CircuitLoader(String[] filePaths) {
+        if (filePaths == null || filePaths.length == 0) {
+            throw new IllegalArgumentException("I percorsi dei circuiti non possono essere vuoti");
+        }
         this.filePaths = filePaths;
     }
 
     @Override
     public ICircuit loadCircuit(int index) throws IOException {
-        if (index < 1 || index > filePaths.length) {
-            throw new IllegalArgumentException("Invalid circuit index. Must be 1, 2, or 3.");
+        // L'indice è basato su zero nell'array ma viene mostrato come 1-based all'utente
+        if (index < 0 || index >= filePaths.length) {
+            throw new IllegalArgumentException("Circuito " + (index + 1) + " non valido");
         }
 
-        String filePath = filePaths[index - 1];
-        char[][] charTrack = CircuitFileReader.readFromFile(filePath);
-        CircuitCell[][] cellTrack = convertToCells(charTrack);
+        String filePath = filePaths[index];
+        try {
+            char[][] charTrack = CircuitFileReader.readFromFile(filePath);
+            CircuitCell[][] cellTrack = convertToCells(charTrack);
 
-        ICircuit circuit = new Circuit(cellTrack);
-        circuit.validate();
-        return circuit;
+            ICircuit circuit = new Circuit(cellTrack);
+            circuit.validate();
+            return circuit;
+        } catch (IOException e) {
+            throw new IOException("Impossibile caricare il circuito " + (index + 1) + ": " + e.getMessage());
+        } catch (IllegalStateException e) {
+            throw new IOException("Formato del circuito " + (index + 1) + " non valido: " + e.getMessage());
+        }
     }
 
     public static CircuitCell[][] convertToCells(char[][] charTrack) {
@@ -44,7 +63,7 @@ public class CircuitLoader implements ICircuitLoader {
                     case '.' -> cellTrack[y][x] = new RoadCell(x, y);
                     case '*' -> cellTrack[y][x] = new FinishCell(x, y);
                     case '@' -> cellTrack[y][x] = new CheckpointCell(x, y);
-                    default -> throw new IllegalStateException("Invalid character in track: " + charTrack[y][x]);
+                    default -> throw new IllegalStateException("Carattere non valido nel circuito: " + charTrack[y][x]);
                 }
             }
         }
@@ -52,4 +71,3 @@ public class CircuitLoader implements ICircuitLoader {
         return cellTrack;
     }
 }
-

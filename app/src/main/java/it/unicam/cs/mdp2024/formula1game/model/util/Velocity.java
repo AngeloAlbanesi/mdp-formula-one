@@ -4,6 +4,13 @@ package it.unicam.cs.mdp2024.formula1game.model.util;
  * Implementation of the IVelocity interface.
  */
 public class Velocity implements IVelocity {
+    private int x;
+    private int y;
+
+    public Velocity(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
     private IVector currentVelocity;
 
     /**

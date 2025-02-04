@@ -44,9 +44,8 @@ public class DefaultCheckpointFinder implements ICheckpointFinder {
                     if (!visited.contains(pos)) {
                         List<IPosition> line = new ArrayList<>();
                         findStraightLine(pos, visited, line);
-                        if (line.size() >= 2) { // Includi solo linee con almeno 2 checkpoint
-                            result.add(line);
-                        }
+                        // Include tutte le linee di checkpoint, anche singole
+                        result.add(line);
                     }
                 }
             }
@@ -57,6 +56,9 @@ public class DefaultCheckpointFinder implements ICheckpointFinder {
 
     @Override
     public boolean isCheckpoint(int x, int y) {
+        if (y < 0 || y >= height || x < 0 || x >= width) {
+            return false;
+        }
         return circuit[y][x] instanceof CheckpointCell;
     }
 
@@ -81,13 +83,17 @@ public class DefaultCheckpointFinder implements ICheckpointFinder {
         vertical.add(start);
         collectInDirection(start, 0, 1, vertical, visited); // Giù
 
-        List<IPosition> chosenLine = horizontal.size() >= vertical.size() ? horizontal : vertical;
-        if (chosenLine.size() > 1) {
-            line.addAll(chosenLine);
-            visited.addAll(chosenLine);
-        } else {
-            line.add(start);
-            visited.add(start);
+        // Aggiungi sempre il punto di partenza
+        line.add(start);
+        visited.add(start);
+        
+        // Se ci sono checkpoint in linea, aggiungili
+        if (horizontal.size() > vertical.size() && horizontal.size() > 1) {
+            line.addAll(horizontal);
+            visited.addAll(horizontal);
+        } else if (vertical.size() > 1) {
+            line.addAll(vertical);
+            visited.addAll(vertical);
         }
     }
 

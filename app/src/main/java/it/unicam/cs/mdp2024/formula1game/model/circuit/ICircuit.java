@@ -44,7 +44,7 @@ public interface ICircuit {
      *
      * @return list of all starting positions in the circuit
      */
-    List<Position> getStartPositions();
+    List<IPosition> getStartPositions();
 
     /**
      * Returns all finish line positions in the circuit.

@@ -25,20 +25,22 @@ public class MovementContext {
      */
     public MovementContext(DefaultMoveValidator moveValidator) {
         this.moveValidator = moveValidator;
-        this.currentStrategy = new AStarMovementStrategy();
         this.weights = new MovementWeights();
+        // Default a strategia A* (codice 1)
+        this.currentStrategy = MovementStrategyFactory.createStrategy(1, moveValidator);
         this.currentStrategy.configureWeights(weights);
     }
 
     /**
-     * Costruttore che permette di specificare una strategia iniziale.
+     * Costruttore che permette di specificare il codice della strategia.
      *
-     * @param strategy La strategia di movimento da utilizzare
+     * @param strategyCode il codice della strategia (1=A*, 2=Dijkstra)
+     * @param moveValidator il validatore di mosse
      */
-    public MovementContext(MovementStrategy strategy, DefaultMoveValidator moveValidator) {
+    public MovementContext(int strategyCode, DefaultMoveValidator moveValidator) {
         this.moveValidator = moveValidator;
-        this.currentStrategy = strategy;
         this.weights = new MovementWeights();
+        this.currentStrategy = MovementStrategyFactory.createStrategy(strategyCode, moveValidator);
         this.currentStrategy.configureWeights(weights);
     }
 
@@ -70,8 +72,8 @@ public class MovementContext {
      * Attiva la strategia difensiva Dijkstra.
      */
     public void activateDefensiveStrategy() {
-        DefensiveDijkstraMovementStrategy defensiveStrategy = 
-            new DefensiveDijkstraMovementStrategy(moveValidator);
+        // Usa il codice 2 per la strategia Dijkstra difensiva
+        MovementStrategy defensiveStrategy = MovementStrategyFactory.createStrategy(2, moveValidator);
         setStrategy(defensiveStrategy);
         
         // Configura i pesi per una guida più difensiva

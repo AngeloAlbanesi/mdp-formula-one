@@ -1,6 +1,7 @@
 package it.unicam.cs.mdp2024.formula1game.model.game;
 
 import it.unicam.cs.mdp2024.formula1game.model.circuit.ICircuit;
+import it.unicam.cs.mdp2024.formula1game.model.circuit.checkpoint.CheckpointManager;
 import it.unicam.cs.mdp2024.formula1game.model.player.IPlayer;
 
 import java.util.List;
@@ -45,4 +46,10 @@ public interface IGame2 {
      * @return lo stato della partita
      */
     String getGameState();
+
+    /**
+     * Ottiene il gestore dei checkpoint del gioco.
+     * @return il gestore dei checkpoint
+     */
+    CheckpointManager getCheckpointManager();
 }

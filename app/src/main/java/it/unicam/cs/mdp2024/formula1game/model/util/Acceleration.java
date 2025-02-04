@@ -4,7 +4,6 @@ package it.unicam.cs.mdp2024.formula1game.model.util;
  * Implementation of the IAcceleration interface linked to velocity.
  */
 public class Acceleration implements IAcceleration {
-
     private final IVector accelerationVector;
 
     public Acceleration(IVector accelerationVector) {
@@ -19,7 +18,7 @@ public class Acceleration implements IAcceleration {
     public IVelocity calculateAcceleration(IVelocity previousVelocity, IVelocity currentVelocity) {
         IVector diffVector = currentVelocity.getCurrentVelocity()
                 .subtract(previousVelocity.getCurrentVelocity());
-        return new Velocity(diffVector);
+        return new Velocity(diffVector.getX(), diffVector.getY());
     }
 
     @Override

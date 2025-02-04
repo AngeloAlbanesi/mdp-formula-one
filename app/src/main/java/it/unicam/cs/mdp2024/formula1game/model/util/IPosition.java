@@ -18,7 +18,8 @@ public interface IPosition {
 
     IVector vectorTo(IPosition other); // Returns the vector from this position to another position
 
-    IPosition nextPosition(IVelocity velocity); // Updated to use IVelocity // Returns the next position after a given velocity
+    IPosition nextPosition(IVelocity velocity); // Updated to use IVelocity // Returns the next position after a given
+                                                // velocity
 
     boolean equals(IPosition other); // Checks if this position equals another position
 

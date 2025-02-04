@@ -48,7 +48,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'it.unicam.cs.mdp2024.formula1game.HelloFX'
+    mainClass = 'it.unicam.cs.mdp2024.formula1game.Main'
     
 }
 

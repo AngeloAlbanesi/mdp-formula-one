@@ -1,6 +1,6 @@
 package it.unicam.cs.mdp2024.formula1game.model.strategy;
 
-import it.unicam.cs.mdp2024.formula1game.model.util.Position;
+import it.unicam.cs.mdp2024.formula1game.model.util.IPosition;
 
 /**
  * Questa classe estende MovementWeights aggiungendo pesi specifici per
@@ -12,9 +12,9 @@ public class SafetyWeights extends MovementWeights {
     private static final double OPPONENT_PROXIMITY_PENALTY = 3.0;
     private static final double SAFE_DISTANCE = 3.0;
     
-    private final Position[] opponentPositions;
+    private final IPosition[] opponentPositions;
     
-    public SafetyWeights(Position[] opponentPositions) {
+    public SafetyWeights(IPosition[] opponentPositions) {
         super(1.0, 2.0, 3.0, 1.0); // Aumenta i pesi per velocità e collisioni
         this.opponentPositions = opponentPositions;
         
@@ -30,7 +30,7 @@ public class SafetyWeights extends MovementWeights {
      * @param to posizione di arrivo
      * @return peso del movimento
      */
-    public double calculateSafetyWeight(Position from, Position to) {
+    public double calculateSafetyWeight(IPosition from, IPosition to) {
         double baseWeight = getPathEfficiencyWeight(); // Usa il peso base per l'efficienza
         
         // Penalizza le curve (cambi di direzione)
@@ -39,7 +39,7 @@ public class SafetyWeights extends MovementWeights {
         }
         
         // Penalizza le posizioni vicine agli avversari
-        for (Position opponent : opponentPositions) {
+        for (IPosition opponent : opponentPositions) {
             if (isNearOpponent(to, opponent)) {
                 baseWeight *= OPPONENT_PROXIMITY_PENALTY;
             }
@@ -48,14 +48,14 @@ public class SafetyWeights extends MovementWeights {
         return baseWeight;
     }
     
-    private boolean isTurn(Position from, Position to) {
+    private boolean isTurn(IPosition from, IPosition to) {
         // Calcola se c'è un cambio di direzione significativo
         int dRow = to.getRow() - from.getRow();
         int dCol = to.getColumn() - from.getColumn();
         return Math.abs(dRow) > 0 && Math.abs(dCol) > 0;
     }
     
-    private boolean isNearOpponent(Position pos, Position opponent) {
+    private boolean isNearOpponent(IPosition pos, IPosition opponent) {
         double distance = Math.sqrt(
             Math.pow(pos.getRow() - opponent.getRow(), 2) +
             Math.pow(pos.getColumn() - opponent.getColumn(), 2)

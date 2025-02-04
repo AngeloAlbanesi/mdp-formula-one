@@ -55,8 +55,8 @@ public class Circuit implements ICircuit {
     }
 
     @Override
-    public List<Position> getStartPositions() {
-        return new ArrayList<>(startPositions);
+    public List<IPosition> getStartPositions() {
+        return new ArrayList<>(startPositions.stream().map(pos -> (IPosition) pos).collect(Collectors.toList()));
     }
 
     @Override
@@ -115,14 +115,19 @@ public class Circuit implements ICircuit {
     @Override
     public void validate() {
         try {
+            StringBuilder errors = new StringBuilder();
             if (startPositions.isEmpty()) {
-                throw new IllegalStateException("Il circuito deve avere almeno una posizione di partenza");
+                errors.append("- Il circuito deve avere almeno una posizione di partenza (S)\n");
             }
             if (finishPositions.isEmpty()) {
-                throw new IllegalStateException("Il circuito deve avere almeno una posizione di arrivo");
+                errors.append("- Il circuito deve avere almeno una posizione di arrivo (*)\n");
             }
             if (checkpointRegistry.getCheckpointCount() == 0) {
-                throw new IllegalStateException("Il circuito deve avere almeno un checkpoint");
+                errors.append("- Il circuito deve avere almeno un checkpoint (@)\n");
+            }
+            
+            if (errors.length() > 0) {
+                throw new IllegalStateException("Errori di validazione del circuito:\n" + errors.toString());
             }
             isValid = true;
         } catch (Exception e) {
