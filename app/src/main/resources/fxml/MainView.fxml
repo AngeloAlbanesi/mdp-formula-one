@@ -10,8 +10,8 @@
 <?import javafx.scene.text.Text?>
 
 <StackPane xmlns="http://javafx.com/javafx"
-           xmlns:fx="http://javafx.com/fxml"
-           fx:controller="it.unicam.cs.mdp2024.formula1game.controller.MainViewController">
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="it.unicam.cs.mdp2024.formula1game.controller.MainViewController">
 
     <!-- Menu di selezione circuito -->
     <VBox fx:id="menuPane" alignment="CENTER" spacing="20">

@@ -169,6 +169,13 @@ public class Game2 implements IGame2 {
         }
 
         try {
+            // Aggiorna il contesto di gioco per i bot prima di scegliere l'accelerazione
+            if (currentPlayer instanceof BotPlayer) {
+                BotPlayer bot = (BotPlayer) currentPlayer;
+                bot.initializeGameDependencies(circuit, moveValidator, checkpointManager);
+                bot.setCurrentPlayers(players);
+            }
+
             // Ottieni la posizione corrente prima del movimento
             IPosition oldPosition = currentPlayer.getCar().getPosition();
 
@@ -191,23 +198,38 @@ public class Game2 implements IGame2 {
                 ((BotPlayer) currentPlayer).setCurrentPlayers(players);
             }
 
-            // Applica la mossa
+            // Applica la mossa e aggiorna lo stato
             currentPlayer.getCar().setAcceleration(acceleration);
             currentPlayer.getCar().move();
 
             // Ottieni la nuova posizione dopo il movimento
             IPosition newPosition = currentPlayer.getCar().getPosition();
+            System.out.println("Debug: New position after move: " + newPosition);
 
             // Verifica se il giocatore ha attraversato un checkpoint
             boolean checkpointCrossed = checkpointManager.checkAndUpdateCheckpoints(
                     currentPlayer, oldPosition, newPosition);
+            
+            if (checkpointCrossed) {
+                System.out.println("Debug: Checkpoint crossed by " + currentPlayer.getName());
+            }
 
             // Se ha attraversato tutti i checkpoint e raggiunge il traguardo
-            if (checkpointManager.hasCompletedAllCheckpoints(currentPlayer) &&
-                    circuit.getFinishPositions().contains(newPosition)) {
-                if (winningStrategy.updateLaps(currentPlayer, laps)) {
-                    hasFinished.put(currentPlayer, true);
+            if (checkpointManager.hasCompletedAllCheckpoints(currentPlayer)) {
+                System.out.println("Debug: Player " + currentPlayer.getName() + " completed all checkpoints");
+                if (circuit.getFinishPositions().contains(newPosition)) {
+                    System.out.println("Debug: Player " + currentPlayer.getName() + " reached finish line");
+                    if (winningStrategy.updateLaps(currentPlayer, laps)) {
+                        System.out.println("Debug: Player " + currentPlayer.getName() + " completed a lap");
+                        hasFinished.put(currentPlayer, true);
+                    }
                 }
+            }
+
+            // Verifica se la posizione è valida dopo il movimento
+            if (!circuit.isValidPosition(newPosition)) {
+                System.out.println("Debug: Invalid position after move, deactivating player");
+                currentPlayer.setActive(false);
             }
 
         } catch (Exception e) {

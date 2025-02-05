@@ -1,3 +1,4 @@
 # Formato: Tipo;Nome;Colore (HEX);Strategia (1=A*, 2=Dijkstra)
 Bot;CPU 1;0000FF;1
 Bot;CPU 2;0000FF;2
+Bot;CPU 3;0000FF;1

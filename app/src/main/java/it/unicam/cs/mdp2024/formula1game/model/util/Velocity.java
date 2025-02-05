@@ -4,14 +4,17 @@ package it.unicam.cs.mdp2024.formula1game.model.util;
  * Implementation of the IVelocity interface.
  */
 public class Velocity implements IVelocity {
-    private int x;
-    private int y;
-
-    public Velocity(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
     private IVector currentVelocity;
+
+    /**
+     * Constructor to initialize velocity with x and y components.
+     * 
+     * @param x the X component of velocity
+     * @param y the Y component of velocity
+     */
+    public Velocity(int x, int y) {
+        this.currentVelocity = new Vector(x, y);
+    }
 
     /**
      * Constructor to initialize velocity with an initial vector.

@@ -7,6 +7,7 @@ import it.unicam.cs.mdp2024.formula1game.model.game.DefaultMoveValidator;
 import it.unicam.cs.mdp2024.formula1game.model.game.IMoveValidator;
 import it.unicam.cs.mdp2024.formula1game.model.strategy.MovementContext;
 import it.unicam.cs.mdp2024.formula1game.model.util.*;
+import java.util.stream.Collectors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,9 +67,9 @@ public class BotPlayer extends Player {
         
         // Configura i pesi per il movimento
         if (strategyCode == 2) { // Strategia difensiva Dijkstra
-            this.movementContext.configureWeights(1.0, 2.0, 3.0, 1.0);
+            this.movementContext.configureWeights(0.8, 1.5, 2.5, 0.8);
         } else { // Strategia A*
-            this.movementContext.configureWeights(2.0, 1.0, 1.5, 2.0);
+            this.movementContext.configureWeights(1.5, 0.8, 1.2, 1.5);
         }
         
         // Inizializza la macchina del bot dalla posizione di partenza del circuito
@@ -130,7 +131,8 @@ public class BotPlayer extends Player {
             return new Acceleration(new Vector(0, 0));
         }
         
-        // Calcola e limita l'accelerazione
+        // Calcola prossima mossa escludendo (0,0)
+        // Calcola la mossa principale
         IAcceleration nextMove = movementContext.calculateNextMove(
             currentPosition,
             currentVelocity,
@@ -138,7 +140,27 @@ public class BotPlayer extends Player {
             circuit,
             nextCheckpoint
         );
-        
+
+        // Verifica che la mossa sia valida
+        if (!moveValidator.isValidMove(this, currentPosition, nextMove, circuit, currentPlayers)) {
+            System.out.println("Debug: Primary move invalid, trying alternatives");
+            // Prova mosse alternative in ordine di priorità
+            int[][] alternatives = {
+                {0, -1}, {0, 1},  // Verticale
+                {-1, 0}, {1, 0},  // Orizzontale
+                {-1, -1}, {1, -1}, {-1, 1}, {1, 1}  // Diagonali
+            };
+            
+            for (int[] alt : alternatives) {
+                IAcceleration altMove = new Acceleration(new Vector(alt[0], alt[1]));
+                if (moveValidator.isValidMove(this, currentPosition, altMove, circuit, currentPlayers)) {
+                    System.out.println("Debug: Found valid alternative move: " + alt[0] + "," + alt[1]);
+                    nextMove = altMove;
+                    break;
+                }
+            }
+        }
+
         // Limita l'accelerazione massima
         IVector moveVector = nextMove.getAccelerationVector();
         if (moveVector.magnitude() > 1) {

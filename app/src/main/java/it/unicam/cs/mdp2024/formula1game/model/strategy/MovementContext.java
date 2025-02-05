@@ -20,33 +20,32 @@ public class MovementContext {
     private IPlayer currentPlayer;
     private List<IPlayer> allPlayers;
 
-    /**
-     * Costruttore che inizializza il contesto con una strategia predefinita (A*).
-     */
     public MovementContext(DefaultMoveValidator moveValidator) {
         this.moveValidator = moveValidator;
         this.weights = new MovementWeights();
-        // Default a strategia A* (codice 1)
+        // Default a strategia A* (codice 1) con pesi bilanciati
         this.currentStrategy = MovementStrategyFactory.createStrategy(1, moveValidator);
+        configureWeights(2.0, 1.0, 0.5, 1.0); // A* priorità al percorso efficiente
         this.currentStrategy.configureWeights(weights);
     }
 
-    /**
-     * Costruttore che permette di specificare il codice della strategia.
-     *
-     * @param strategyCode il codice della strategia (1=A*, 2=Dijkstra)
-     * @param moveValidator il validatore di mosse
-     */
     public MovementContext(int strategyCode, DefaultMoveValidator moveValidator) {
         this.moveValidator = moveValidator;
         this.weights = new MovementWeights();
         this.currentStrategy = MovementStrategyFactory.createStrategy(strategyCode, moveValidator);
+        
+        // Configura i pesi in base alla strategia
+        if (strategyCode == 1) {
+            // A* priorità al percorso efficiente
+            configureWeights(2.0, 1.0, 0.5, 1.0);
+        } else {
+            // Dijkstra priorità alla sicurezza
+            configureWeights(1.0, 1.5, 2.0, 1.0);
+        }
+        
         this.currentStrategy.configureWeights(weights);
     }
 
-    /**
-     * Imposta il contesto del gioco per la validazione delle mosse.
-     */
     public void setGameContext(IPlayer player, List<IPlayer> players) {
         this.currentPlayer = player;
         this.allPlayers = players;
@@ -55,11 +54,6 @@ public class MovementContext {
         }
     }
 
-    /**
-     * Cambia la strategia di movimento corrente.
-     *
-     * @param newStrategy La nuova strategia da utilizzare
-     */
     public void setStrategy(MovementStrategy newStrategy) {
         this.currentStrategy = newStrategy;
         this.currentStrategy.configureWeights(weights);
@@ -68,28 +62,14 @@ public class MovementContext {
         }
     }
 
-    /**
-     * Attiva la strategia difensiva Dijkstra.
-     */
     public void activateDefensiveStrategy() {
-        // Usa il codice 2 per la strategia Dijkstra difensiva
         MovementStrategy defensiveStrategy = MovementStrategyFactory.createStrategy(2, moveValidator);
         setStrategy(defensiveStrategy);
         
-        // Configura i pesi per una guida più difensiva
-        configureWeights(1.0, 2.0, 3.0, 1.0);
+        // Configura i pesi per una guida più difensiva ma mantenendo velocità accettabile
+        configureWeights(1.0, 1.5, 2.0, 1.0);
     }
 
-    /**
-     * Calcola la prossima mossa utilizzando la strategia corrente.
-     *
-     * @param currentPosition   Posizione attuale
-     * @param currentVelocity   Velocità attuale
-     * @param opponentPositions Lista delle posizioni degli avversari
-     * @param circuit          Circuito di gioco
-     * @param nextCheckpoint   Prossimo checkpoint da raggiungere
-     * @return L'accelerazione calcolata per la prossima mossa
-     */
     public IAcceleration calculateNextMove(IPosition currentPosition,
             IVelocity currentVelocity,
             List<IPosition> opponentPositions,
@@ -102,14 +82,6 @@ public class MovementContext {
                 nextCheckpoint);
     }
 
-    /**
-     * Configura i pesi utilizzati per il bilanciamento delle decisioni.
-     *
-     * @param pathEfficiency     Peso per l'efficienza del percorso
-     * @param speedControl       Peso per il controllo della velocità
-     * @param collisionAvoidance Peso per l'evitamento delle collisioni
-     * @param checkpointAlign    Peso per l'allineamento ai checkpoint
-     */
     public void configureWeights(double pathEfficiency, double speedControl,
             double collisionAvoidance, double checkpointAlign) {
         weights.setPathEfficiencyWeight(pathEfficiency);
@@ -119,11 +91,6 @@ public class MovementContext {
         currentStrategy.configureWeights(weights);
     }
 
-    /**
-     * Ottiene la strategia corrente.
-     *
-     * @return La strategia di movimento attualmente in uso
-     */
     public MovementStrategy getCurrentStrategy() {
         return currentStrategy;
     }

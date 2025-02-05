@@ -4,6 +4,7 @@ package it.unicam.cs.mdp2024.formula1game.model.util;
  * Implementation of the IVector interface.
  */
 public class Vector implements IVector {
+    public static final Vector ZERO = new Vector(0, 0);
     private final int x;
     private final int y;
 
@@ -80,6 +81,16 @@ public int direction() {
     public boolean equals(IVector other) {
         if (other == null) return false;
         return this.x == other.getX() && this.y == other.getY();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (obj instanceof IVector other) {
+            return equals(other);
+        }
+        return false;
     }
 
     @Override
